@@ -12,6 +12,9 @@ from urllib.request import Request, urlopen
 _LOGGER = logging.getLogger("rematters.cloud")
 
 OPTIONS_PATH = "/data/options.json"
+# Identifies HA sync to the cloud API (avoids Plesk/Imunify “browser signature” 403 on Python-urllib).
+ADDON_API_VERSION = "0.1.4"
+USER_AGENT = f"Rematters-HomeAssistant/{ADDON_API_VERSION} (+https://github.com/Rematters/Rematters-HA)"
 
 
 def load_cloud_options() -> dict[str, Any]:
@@ -42,6 +45,8 @@ def _api_request(method: str, path: str, body: Optional[dict] = None) -> dict[st
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/json",
+        "User-Agent": USER_AGENT,
+        "X-Rematters-Client": "homeassistant-addon",
     }
     if body is not None:
         data = json.dumps(body).encode("utf-8")
@@ -62,6 +67,12 @@ def _api_request(method: str, path: str, body: Optional[dict] = None) -> dict[st
         except json.JSONDecodeError:
             if detail and len(detail) < 200:
                 msg = f"{msg}: {detail}"
+            elif "browser" in detail.lower() and "signature" in detail.lower():
+                msg = (
+                    f"{msg}: Server WAF blocked the add-on (not a bad token). "
+                    "Update to add-on 0.1.4+ or whitelist User-Agent "
+                    f"'{USER_AGENT}' or path /api/sync/ in Plesk Imunify360."
+                )
         raise RuntimeError(msg) from e
     except URLError as e:
         _LOGGER.error("Cloud unreachable: %s", e)

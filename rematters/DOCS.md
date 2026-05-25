@@ -35,7 +35,7 @@ Automatic backups follow **Backup interval (hours)**; old files are pruned per *
 
 ```json
 {
-  "meta": { "version": 1, "exported_at": "ISO8601", "addon_version": "0.1.3" },
+  "meta": { "version": 1, "exported_at": "ISO8601", "addon_version": "0.1.4" },
   "categories": [
     { "id": "uuid", "name": "Living room", "color": "#6366f1", "sort_order": 0 }
   ],

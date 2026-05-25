@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4 — 2026-05-25
+
+- Fix cloud sync 403 from Plesk/Imunify bot protection: send `User-Agent: Rematters-HomeAssistant/…` on API calls
+
 ## 0.1.3 — 2026-05-25
 
 - Cloud sync: run on add-on startup and every 15 minutes (not only manual button)
