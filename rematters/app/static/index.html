@@ -64,6 +64,7 @@
       </label>
       <button type="button" id="btn-backup" class="rm-btn rm-btn-secondary" data-i18n="action.backup_now">Backup now</button>
       <button type="button" id="btn-cloud-sync" class="rm-btn rm-btn-secondary" data-i18n="action.cloud_sync" title="Sync with Rematters Cloud">Cloud sync</button>
+      <button type="button" id="btn-scan-code" class="rm-btn rm-btn-secondary" data-i18n="action.scan_code">Scan</button>
       <button type="button" id="btn-add-code" class="rm-btn rm-btn-primary" data-i18n="action.add_code">+ Code</button>
     </div>
   </header>
@@ -99,6 +100,9 @@
       <label><span data-i18n="code.category">Category</span>
         <select id="code-category"></select>
       </label>
+      <div class="scan-inline-row">
+        <button type="button" id="btn-scan-in-form" class="rm-btn rm-btn-secondary" data-i18n="action.scan_code">Scan QR</button>
+      </div>
       <label><span data-i18n="code.manual">Manual code (11 digits)</span>
         <input type="text" id="code-manual" data-i18n-placeholder="code.manual_placeholder" placeholder="1234-567-8901" />
       </label>
@@ -123,6 +127,46 @@
     </form>
   </dialog>
 
+  <dialog id="scan-dialog" class="scan-dialog">
+    <form method="dialog">
+      <h3 data-i18n="scan.title">Scan Matter code</h3>
+      <p id="scan-hint" class="scan-hint" data-i18n="scan.hint_native">Point your camera at the Matter QR on the device or manual.</p>
+      <div id="scan-reader" class="scan-reader"></div>
+      <label class="scan-photo-label">
+        <span data-i18n="scan.photo">Or upload a photo</span>
+        <input type="file" id="scan-file-input" accept="image/*" capture="environment" />
+      </label>
+      <div class="dialog-actions">
+        <button type="button" id="scan-stop" class="rm-btn rm-btn-secondary" data-i18n="action.cancel">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="share-dialog" class="share-dialog">
+    <form method="dialog">
+      <h3 data-i18n="share.title">Share Matter code</h3>
+      <p class="share-dialog-name" id="share-dialog-name"></p>
+      <div class="share-dialog-actions">
+        <button type="button" class="rm-btn rm-btn-secondary" id="share-btn-image" data-i18n="share.download_image">Download image</button>
+        <button type="button" class="rm-btn rm-btn-primary" id="share-btn-link" data-i18n="share.create_link">Create secret link</button>
+      </div>
+      <div id="share-link-panel" class="share-link-panel hidden">
+        <p class="share-link-hint" data-i18n="share.link_hint">Only people with the full URL (including ?k=) can open the page.</p>
+        <label class="share-url-label"><span data-i18n="share.url_label">Share URL</span>
+          <input type="text" id="share-url" readonly />
+        </label>
+        <div class="dialog-actions">
+          <button type="button" class="rm-btn rm-btn-secondary" id="share-copy-url" data-i18n="share.copy">Copy link</button>
+          <button type="button" class="rm-btn rm-btn-secondary" id="share-open-url" data-i18n="share.open">Open page</button>
+        </div>
+        <ul id="share-active-list" class="share-active-list"></ul>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="rm-btn rm-btn-secondary" data-close data-i18n="action.cancel">Close</button>
+      </div>
+    </form>
+  </dialog>
+
   <dialog id="category-dialog">
     <form id="category-form" method="dialog">
       <h3 id="category-dialog-title" data-i18n="categories.dialog_new">New category</h3>
@@ -137,6 +181,10 @@
   </dialog>
 
   <script src="./static/i18n.js"></script>
+  <script src="./static/brand/js/matter-scan.js"></script>
+  <script src="./static/brand/js/matter-scanner.js"></script>
+  <script src="./static/brand/js/vault-scan-ui.js"></script>
+  <script src="./static/brand/js/vault-share-ui.js"></script>
   <script src="./static/app.js"></script>
 </body>
 </html>

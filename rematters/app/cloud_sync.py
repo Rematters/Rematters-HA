@@ -14,7 +14,7 @@ _LOGGER = logging.getLogger("rematters.cloud")
 
 OPTIONS_PATH = "/data/options.json"
 # Identifies HA sync to the cloud API (avoids Plesk/Imunify “browser signature” 403 on Python-urllib).
-ADDON_API_VERSION = "0.1.5"
+ADDON_API_VERSION = "0.1.7"
 USER_AGENT = f"Rematters-HomeAssistant/{ADDON_API_VERSION} (+https://github.com/Rematters/Rematters-HA)"
 
 
@@ -35,6 +35,46 @@ def cloud_configured() -> bool:
     if opts.get("cloud_enabled") is False:
         return False
     return True
+
+
+def cloud_api_raw(method: str, path: str, body: Optional[dict] = None) -> tuple[bytes, str]:
+    """Call Rematters Cloud API; return response body bytes and Content-Type."""
+    opts = load_cloud_options()
+    base = (opts.get("cloud_url") or "https://rematters.casa").rstrip("/")
+    token = (opts.get("cloud_token") or "").strip()
+    url = f"{base}{path}"
+    data = None
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "User-Agent": USER_AGENT,
+        "X-Rematters-Client": "homeassistant-addon",
+    }
+    if body is not None:
+        data = json.dumps(body).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+        headers["Accept"] = "application/json"
+    else:
+        headers["Accept"] = "*/*"
+    req = Request(url, data=data, headers=headers, method=method)
+    try:
+        with urlopen(req, timeout=60) as resp:
+            content_type = resp.headers.get("Content-Type", "application/octet-stream")
+            return resp.read(), content_type
+    except HTTPError as e:
+        detail = e.read().decode("utf-8", errors="replace")
+        _LOGGER.error("Cloud API %s %s: %s %s", method, path, e.code, detail)
+        msg = f"Cloud API error {e.code}"
+        try:
+            parsed = json.loads(detail) if detail else {}
+            if isinstance(parsed, dict) and parsed.get("detail"):
+                msg = str(parsed["detail"])
+        except json.JSONDecodeError:
+            if detail and len(detail) < 200:
+                msg = detail
+        raise RuntimeError(msg) from e
+    except URLError as e:
+        _LOGGER.error("Cloud unreachable: %s", e)
+        raise RuntimeError("Cloud unreachable") from e
 
 
 def _api_request(method: str, path: str, body: Optional[dict] = None) -> dict[str, Any]:

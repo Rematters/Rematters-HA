@@ -6,6 +6,8 @@ const { t, initI18n, setLocale } = window.RemattersI18n;
 
 let vault = { categories: [], codes: [] };
 let activeCategoryId = null;
+let cloudShareAvailable = false;
+let shareUi = null;
 
 async function api(path, options = {}) {
   const res = await fetch(`${API}${path}`, {
@@ -14,7 +16,10 @@ async function api(path, options = {}) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || res.statusText);
+    const e = new Error(err.detail || res.statusText);
+    e.status = res.status;
+    e.existing = err.existing;
+    throw e;
   }
   if (res.status === 204) return null;
   const ct = res.headers.get("content-type") || "";
@@ -87,8 +92,18 @@ function renderCodes() {
     const card = document.createElement("article");
     card.className = "code-card";
     const hasQr = code.qr_payload || code.manual_code;
+    const icons = window.RemattersVaultShareUi?.cardIconButtonsHtml({
+      iconsHref: "./static/brand/icons.svg",
+      showShare: cloudShareAvailable,
+      shareLabel: t("action.share"),
+      editLabel: t("action.edit"),
+      deleteLabel: t("action.delete"),
+    }) || "";
     card.innerHTML = `
-      <h3>${escapeHtml(code.name)}</h3>
+      <div class="code-card-top">
+        <h3>${escapeHtml(code.name)}</h3>
+        ${icons}
+      </div>
       <div class="code-meta">
         ${code.device_type ? escapeHtml(code.device_type) + " · " : ""}
         <span class="badge">${escapeHtml(categoryName(code.category_id))}</span>
@@ -98,11 +113,14 @@ function renderCodes() {
       ${code.notes ? `<p class="code-meta">${escapeHtml(code.notes)}</p>` : ""}
       ${code.ha_link?.entity_id ? `<p class="code-meta">HA: ${escapeHtml(code.ha_link.entity_id)}.${escapeHtml(code.ha_link.attribute || "")}</p>` : ""}
       ${hasQr ? `<img class="qr" src="./api/codes/${code.id}/qr.png" alt="QR" />` : ""}
-      <div class="card-actions">
-        <button type="button" class="rm-btn rm-btn-secondary" data-edit>${escapeHtml(t("action.edit"))}</button>
-        <button type="button" class="rm-btn rm-btn-danger" data-delete>${escapeHtml(t("action.delete"))}</button>
-      </div>
     `;
+    const shareBtn = card.querySelector("[data-share]");
+    if (shareBtn && shareUi) {
+      shareBtn.onclick = () => shareUi.openShareDialog(code);
+    } else if (shareBtn) {
+      shareBtn.disabled = true;
+      shareBtn.title = t("share.cloud_required");
+    }
     card.querySelector("[data-edit]").onclick = () => openCodeDialog(code);
     card.querySelector("[data-delete]").onclick = () => deleteCode(code.id);
     grid.appendChild(card);
@@ -161,6 +179,9 @@ function openCategoryDialog(cat = null) {
   dlg.showModal();
 }
 
+const SCAN_LIB_URL =
+  "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js";
+
 async function saveCode(e) {
   e.preventDefault();
   const id = document.getElementById("code-id").value;
@@ -176,10 +197,29 @@ async function saveCode(e) {
       attribute: document.getElementById("code-ha-attr").value.trim() || null,
     },
   };
-  if (id) {
-    await api(`/codes/${id}`, { method: "PUT", body: JSON.stringify(body) });
-  } else {
-    await api("/codes", { method: "POST", body: JSON.stringify(body) });
+  const dup = window.RemattersScan?.findDuplicate(vault.codes, body, id || null);
+  if (dup) {
+    const msg = t("scan.duplicate", { name: dup.name || t("scan.unnamed") });
+    if (confirm(msg + "\n\n" + t("scan.duplicate_open"))) {
+      document.getElementById("code-dialog").close();
+      openCodeDialog(dup);
+    }
+    return;
+  }
+  try {
+    if (id) {
+      await api(`/codes/${id}`, { method: "PUT", body: JSON.stringify(body) });
+    } else {
+      await api("/codes", { method: "POST", body: JSON.stringify(body) });
+    }
+  } catch (err) {
+    if (err.status === 409 && err.existing?.id) {
+      if (confirm((err.message || t("scan.duplicate", { name: "" })) + "\n\n" + t("scan.duplicate_open"))) {
+        openCodeDialog(vault.codes.find((c) => c.id === err.existing.id) || null);
+      }
+      return;
+    }
+    throw err;
   }
   document.getElementById("code-dialog").close();
   await loadVault();
@@ -257,9 +297,11 @@ function bindUi() {
   if (btnCloud) {
     api("/cloud/status")
       .then((s) => {
+        cloudShareAvailable = Boolean(s.share_available ?? s.configured);
         if (!s.configured && s.hint) {
           btnCloud.title = s.hint;
         }
+        renderCodes();
       })
       .catch(() => {});
     btnCloud.onclick = async () => {
@@ -320,6 +362,30 @@ window.RemattersUI = { refreshBackupStatus: loadBackupStatus };
 async function boot() {
   await initI18n();
   bindUi();
+  if (window.RemattersVaultShareUi) {
+    shareUi = window.RemattersVaultShareUi.bindShareUi({
+      api,
+      apiBase: `${API}`,
+      messages: {
+        activeLinks: t("share.active_links"),
+        revoke: t("share.revoke"),
+        revokeConfirm: t("share.revoke_confirm"),
+        linkCopied: t("share.link_copied"),
+        linkCreated: t("share.link_created"),
+        copied: t("share.copied"),
+        downloadFail: t("share.download_fail"),
+        linkFail: t("share.link_fail"),
+      },
+    });
+  }
+  if (window.RemattersVaultScanUi) {
+    window.RemattersVaultScanUi.bindVaultScanUi({
+      getVault: () => vault,
+      openCodeDialog,
+      t,
+      libUrl: SCAN_LIB_URL,
+    });
+  }
   await loadVault();
   await loadBackupStatus();
 }

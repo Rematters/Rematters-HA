@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.7 — 2026-05-29
+
+- Share icon on code cards (via Rematters Cloud when hybrid is configured)
+- Share dialog: download image + secret link; proxied cloud API from add-on
+
+## 0.1.6 — 2026-05-25
+
+- Scan Matter QR via mobile camera (or photo) when adding codes
+- Block duplicate Matter codes (same manual digits or MT: QR payload)
+
 ## 0.1.5 — 2026-05-25
 
 - Fix hybrid sync ignoring cloud edits (category, fields) when timestamps used mixed `Z` vs `+00:00` formats

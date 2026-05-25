@@ -27,7 +27,7 @@ from models import (
     MatterCodeUpdate,
     utc_now,
 )
-from cloud_sync import cloud_configured, load_cloud_options, run_cloud_sync
+from cloud_sync import cloud_api_raw, cloud_configured, load_cloud_options, run_cloud_sync, _api_request
 from models import Vault
 from storage import VaultStorage
 
@@ -59,6 +59,33 @@ def _find_code(vault, code_id: str) -> MatterCode:
         if code.id == code_id:
             return code
     raise HTTPException(404, "Matter code not found")
+
+
+def _normalize_manual_key(value: str) -> str:
+    digits = "".join(c for c in (value or "") if c.isdigit())
+    return digits if len(digits) == 11 else ""
+
+
+def _normalize_qr_key(value: str) -> str:
+    s = (value or "").strip().upper()
+    return s if s.startswith("MT:") else ""
+
+
+def _find_duplicate_code(
+    vault: Vault, candidate: dict, exclude_id: str | None = None
+) -> MatterCode | None:
+    man_key = _normalize_manual_key(str(candidate.get("manual_code", "")))
+    qr_key = _normalize_qr_key(str(candidate.get("qr_payload", "")))
+    if not man_key and not qr_key:
+        return None
+    for existing in vault.codes:
+        if exclude_id and existing.id == exclude_id:
+            continue
+        if man_key and man_key == _normalize_manual_key(existing.manual_code):
+            return existing
+        if qr_key and qr_key == _normalize_qr_key(existing.qr_payload):
+            return existing
+    return None
 
 
 def run_backup() -> dict[str, Any]:
@@ -130,7 +157,7 @@ async def lifespan(app: FastAPI):
         scheduler.shutdown(wait=False)
 
 
-app = FastAPI(title="Rematters", version="0.1.5", lifespan=lifespan)
+app = FastAPI(title="Rematters", version="0.1.6", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -255,6 +282,12 @@ async def create_code(body: MatterCodeCreate):
         code.ha_link = ha_link
     if code.category_id:
         _find_category(vault, code.category_id)
+    dup = _find_duplicate_code(vault, code.model_dump(mode="json"))
+    if dup:
+        raise HTTPException(
+            409,
+            detail=f"This Matter code is already saved as “{dup.name}”",
+        )
     vault.codes.append(code)
     storage.save(vault)
     return code
@@ -273,6 +306,12 @@ async def update_code(code_id: str, body: MatterCodeUpdate):
     if ha_link is not None:
         code.ha_link = ha_link
     code.updated_at = utc_now()
+    dup = _find_duplicate_code(vault, code.model_dump(mode="json"), exclude_id=code_id)
+    if dup:
+        raise HTTPException(
+            409,
+            detail=f"This Matter code is already saved as “{dup.name}”",
+        )
     storage.save(vault)
     return code
 
@@ -336,6 +375,62 @@ async def sync_code_from_ha(code_id: str):
     return code
 
 
+# --- Cloud share (proxied to rematters.casa when hybrid is configured) ---
+
+
+def _require_cloud_for_share():
+    if not cloud_configured():
+        raise HTTPException(
+            503,
+            "Configure Rematters Cloud (cloud_url + cloud_token) to share codes. "
+            "Run Cloud sync so this code exists on the cloud vault.",
+        )
+
+
+@app.get("/api/codes/{code_id}/shares")
+async def list_code_shares(code_id: str):
+    _require_cloud_for_share()
+    try:
+        return _api_request("GET", f"/api/codes/{code_id}/shares")
+    except RuntimeError as e:
+        raise HTTPException(502, str(e)) from e
+
+
+@app.post("/api/codes/{code_id}/shares")
+async def create_code_share(code_id: str, request: Request):
+    _require_cloud_for_share()
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    if not isinstance(body, dict):
+        body = {}
+    try:
+        return _api_request("POST", f"/api/codes/{code_id}/shares", body)
+    except RuntimeError as e:
+        raise HTTPException(502, str(e)) from e
+
+
+@app.delete("/api/shares/{share_id}")
+async def revoke_code_share(share_id: int):
+    _require_cloud_for_share()
+    try:
+        cloud_api_raw("DELETE", f"/api/shares/{share_id}")
+    except RuntimeError as e:
+        raise HTTPException(502, str(e)) from e
+    return Response(status_code=204)
+
+
+@app.get("/api/codes/{code_id}/card.png")
+async def code_card_png(code_id: str):
+    _require_cloud_for_share()
+    try:
+        data, content_type = cloud_api_raw("GET", f"/api/codes/{code_id}/card.png")
+    except RuntimeError as e:
+        raise HTTPException(502, str(e)) from e
+    return StreamingResponse(io.BytesIO(data), media_type=content_type.split(";")[0].strip())
+
+
 # --- Cloud sync (optional hybrid) ---
 
 
@@ -347,6 +442,7 @@ async def cloud_status():
     enabled_flag = opts.get("cloud_enabled")
     return {
         "configured": cloud_configured(),
+        "share_available": cloud_configured(),
         "url": (opts.get("cloud_url") or "").strip() or None,
         "has_token": has_token,
         "cloud_enabled": enabled_flag,
@@ -386,7 +482,7 @@ async def index():
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.isfile(index_path):
         return FileResponse(index_path)
-    return JSONResponse({"service": "rematters", "version": "0.1.5"})
+    return JSONResponse({"service": "rematters", "version": "0.1.6"})
 
 
 if __name__ == "__main__":
