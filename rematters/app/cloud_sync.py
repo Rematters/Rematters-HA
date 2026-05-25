@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from datetime import datetime, timezone
 from typing import Any, Optional
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -13,7 +14,7 @@ _LOGGER = logging.getLogger("rematters.cloud")
 
 OPTIONS_PATH = "/data/options.json"
 # Identifies HA sync to the cloud API (avoids Plesk/Imunify “browser signature” 403 on Python-urllib).
-ADDON_API_VERSION = "0.1.4"
+ADDON_API_VERSION = "0.1.5"
 USER_AGENT = f"Rematters-HomeAssistant/{ADDON_API_VERSION} (+https://github.com/Rematters/Rematters-HA)"
 
 
@@ -142,7 +143,29 @@ def _merge_vaults(local: dict, incoming: dict) -> dict:
     return out
 
 
+def _parse_ts(value: Any) -> datetime | None:
+    """Parse ISO timestamps from Cloud (…Z) or legacy HA (…+00:00)."""
+    if not value or not isinstance(value, str):
+        return None
+    s = value.strip()
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+    try:
+        dt = datetime.fromisoformat(s)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 def _pick_newer(a: dict, b: dict) -> dict:
-    ta = a.get("updated_at") or a.get("created_at") or ""
-    tb = b.get("updated_at") or b.get("created_at") or ""
+    ta = _parse_ts(a.get("updated_at") or a.get("created_at"))
+    tb = _parse_ts(b.get("updated_at") or b.get("created_at"))
+    if ta is None and tb is None:
+        return b
+    if ta is None:
+        return b
+    if tb is None:
+        return a
     return b if tb >= ta else a

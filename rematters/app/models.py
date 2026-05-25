@@ -10,7 +10,8 @@ from pydantic import BaseModel, Field
 
 
 def utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    """Match Rematters Cloud format (UTC Z, no fractional seconds) for sync merges."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 class Category(BaseModel):
@@ -41,7 +42,7 @@ class MatterCode(BaseModel):
 class VaultMeta(BaseModel):
     version: int = 1
     exported_at: Optional[str] = None
-    addon_version: str = "0.1.4"
+    addon_version: str = "0.1.5"
 
 
 class Vault(BaseModel):

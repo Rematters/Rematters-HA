@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5 — 2026-05-25
+
+- Fix hybrid sync ignoring cloud edits (category, fields) when timestamps used mixed `Z` vs `+00:00` formats
+- Align HA `updated_at` format with Rematters Cloud for reliable merge
+
 ## 0.1.4 — 2026-05-25
 
 - Fix cloud sync 403 from Plesk/Imunify bot protection: send `User-Agent: Rematters-HomeAssistant/…` on API calls
