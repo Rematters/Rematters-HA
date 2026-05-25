@@ -14,18 +14,18 @@
 
 ## Add this repository in Home Assistant
 
-**Settings → Add-ons → Add-on store → ⋮ → Repositories**
+**Settings → Apps → Install app → Repositories**
 
 ```text
 https://github.com/Rematters/Rematters-HA
 ```
 
-Then install **Rematters**, start the add-on, and open **Open Web UI** (Ingress).
+Then go to **Settings → Apps**, install **Rematters**, start it, and open **Open Web UI** (Ingress).
 
 ## Repository layout
 
 ```text
-Rematters-HA/                 ← this repo (add-on store root)
+Rematters-HA/                 ← this repo (HA Apps repository root)
 ├── repository.yaml
 └── rematters/                ← add-on (slug: rematters)
     ├── config.yaml
