@@ -7,8 +7,8 @@
 
 | | |
 |---|---|
-| **Website** | [rematters.nl](https://rematters.nl) |
-| **Viewer** | [viewer.rematters.nl](https://viewer.rematters.nl) |
+| **Website** | [rematters.casa](https://rematters.casa) |
+| **Viewer** | [viewer.rematters.casa](https://viewer.rematters.casa) |
 | **Landing / docs** | [Rematters-Web](https://github.com/Rematters/Rematters-Web) |
 | **Web viewer repo** | [Rematters-Webviewer](https://github.com/Rematters/Rematters-Webviewer) |
 
@@ -50,4 +50,4 @@ REMATTERS_DATA=/tmp/rematters-data python main.py
 
 ## License
 
-MIT © [Rematters](https://rematters.nl)
+MIT © [Rematters](https://rematters.casa)

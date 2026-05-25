@@ -7,7 +7,7 @@
 1. **Categories** — group codes by room, vendor, or your own logic (right-click a category to edit).
 2. **Add codes** — enter at least a name plus manual code and/or `MT:` QR string.
 3. **HA link** — optional `entity_id` + attribute; use **Pull from HA** to sync the value.
-4. **Export** — download `rematters-export.json` for backup or the [Rematters Viewer](https://viewer.rematters.nl).
+4. **Export** — download `rematters-export.json` for backup or the [Rematters Viewer](https://viewer.rematters.casa).
 5. **Backup now** — local copy plus Google Drive upload (when configured).
 
 ## Languages
@@ -77,6 +77,6 @@ All routes are relative to the Ingress base under `./api/`:
 
 ## Rematters Viewer
 
-Users without HA can open exports at **[viewer.rematters.nl](https://viewer.rematters.nl)** ([Rematters-Webviewer](https://github.com/Rematters/Rematters-Webviewer)). The viewer validates `codes[]` and renders QR codes locally in the browser.
+Users without HA can open exports at **[viewer.rematters.casa](https://viewer.rematters.casa)** ([Rematters-Webviewer](https://github.com/Rematters/Rematters-Webviewer)). The viewer validates `codes[]` and renders QR codes locally in the browser.
 
-Product site: [rematters.nl](https://rematters.nl) · [Rematters-Web](https://github.com/Rematters/Rematters-Web)
+Product site: [rematters.casa](https://rematters.casa) · [Rematters-Web](https://github.com/Rematters/Rematters-Web)
