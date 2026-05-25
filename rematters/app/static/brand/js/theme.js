@@ -5,6 +5,11 @@
 (function () {
   var STORAGE_KEY = "rematters-theme";
   var MODES = ["light", "dark", "auto"];
+  var ICON_IDS = {
+    light: "rm-icon-sun",
+    dark: "rm-icon-moon",
+    auto: "rm-icon-auto",
+  };
 
   function systemTheme() {
     return window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -45,9 +50,12 @@
         btn.setAttribute("aria-pressed", active ? "true" : "false");
       }
     });
-    document.querySelectorAll(".theme-dropdown-current").forEach(function (icon) {
-      var show = icon.getAttribute("data-theme-icon") === mode;
-      icon.hidden = !show;
+    document.querySelectorAll("[data-theme-dropdown]").forEach(function (root) {
+      var use = root.querySelector(".theme-dropdown-use");
+      if (!use) return;
+      var base = root.getAttribute("data-icons-href") || "/brand/icons.svg";
+      var id = ICON_IDS[mode] || ICON_IDS.light;
+      use.setAttribute("href", base + "#" + id);
     });
   }
 
