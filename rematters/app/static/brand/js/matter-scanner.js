@@ -154,6 +154,13 @@
     onError(new Error("Photo scan not supported in this browser"));
   }
 
+  /**
+   * @param {object} opts
+   * @param {string} opts.containerId
+   * @param {string} [opts.libUrl] html5-qrcode script URL
+   * @param {(text: string) => void} opts.onScan
+   * @param {(err: Error) => void} opts.onError
+   */
   async function startCamera(opts) {
     stopCamera();
     const { containerId, libUrl, onScan, onError } = opts;

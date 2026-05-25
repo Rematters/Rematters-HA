@@ -1,5 +1,5 @@
 name: Rematters
-version: "0.1.8"
+version: "0.1.9"
 slug: rematters
 description: Store and organize Matter pairing codes and QR payloads. Export JSON and back up to Google Drive.
 url: https://github.com/Rematters/Rematters-HA

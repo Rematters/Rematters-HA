@@ -28,7 +28,8 @@ from models import (
     utc_now,
 )
 from cloud_sync import cloud_api_raw, cloud_configured, load_cloud_options, run_cloud_sync, _api_request
-from share_card import card_png_bytes
+from matter_label import label_png_bytes
+from matter_payload import normalize_fields, qr_encode_payload
 from models import Vault
 from storage import VaultStorage
 
@@ -273,12 +274,19 @@ async def list_codes(category_id: Optional[str] = Query(None)):
     return codes
 
 
+def _apply_matter_fields(code: MatterCode) -> None:
+    normalized = normalize_fields(code.manual_code or "", code.qr_payload or "")
+    code.manual_code = normalized["manual_code"]
+    code.qr_payload = normalized["qr_payload"]
+
+
 @app.post("/api/codes", status_code=201)
 async def create_code(body: MatterCodeCreate):
     vault = storage.load()
     data = body.model_dump()
     ha_link = data.pop("ha_link", None)
     code = MatterCode(**data)
+    _apply_matter_fields(code)
     if ha_link:
         code.ha_link = ha_link
     if code.category_id:
@@ -306,6 +314,8 @@ async def update_code(code_id: str, body: MatterCodeUpdate):
         setattr(code, key, value)
     if ha_link is not None:
         code.ha_link = ha_link
+    if "manual_code" in updates or "qr_payload" in updates:
+        _apply_matter_fields(code)
     code.updated_at = utc_now()
     dup = _find_duplicate_code(vault, code.model_dump(mode="json"), exclude_id=code_id)
     if dup:
@@ -330,14 +340,27 @@ async def delete_code(code_id: str):
 async def code_qr_png(code_id: str):
     vault = storage.load()
     code = _find_code(vault, code_id)
-    payload = code.qr_payload or code.manual_code
+    payload = qr_encode_payload(code.qr_payload or "", code.manual_code or "")
     if not payload:
-        raise HTTPException(400, "No QR payload or manual code")
+        raise HTTPException(400, "No MT: QR payload stored")
     img = qrcode.make(payload)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     buf.seek(0)
     return StreamingResponse(buf, media_type="image/png")
+
+
+@app.get("/api/codes/{code_id}/label.png")
+async def code_label_png(code_id: str):
+    vault = storage.load()
+    code = _find_code(vault, code_id)
+    try:
+        png = label_png_bytes(code.manual_code or "", code.qr_payload or "")
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    if not png:
+        raise HTTPException(404, "No Matter code to render")
+    return StreamingResponse(io.BytesIO(png), media_type="image/png")
 
 
 # --- Home Assistant ---
@@ -435,14 +458,11 @@ async def code_card_png(code_id: str):
         except RuntimeError:
             pass
     try:
-        png = card_png_bytes(
-            code.name,
-            code.device_type or "",
-            code.manual_code or "",
-            code.qr_payload or "",
-        )
+        png = label_png_bytes(code.manual_code or "", code.qr_payload or "")
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
+    if not png:
+        raise HTTPException(404, "No Matter code to render")
     return StreamingResponse(io.BytesIO(png), media_type="image/png")
 
 

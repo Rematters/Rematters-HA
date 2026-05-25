@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.9 — 2026-05-31
+
+- Matter-style pairing labels on code cards (logo, scannable MT: QR, setup code below)
+- QR encodes only the MT:… payload (not hyphenated manual code) so HA / Apple Home scans work
+- Normalize 11-digit setup codes as XXXX-XXX-XXXX on save
+
 ## 0.1.8 — 2026-05-29
 
 - Vault code cards match Rematters Cloud (Share / Edit / Delete icons, English labels)

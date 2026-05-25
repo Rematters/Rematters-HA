@@ -2,6 +2,13 @@
  * Shared scan dialog wiring for Rematters vault UIs.
  */
 (function (global) {
+  /**
+   * @param {object} opts
+   * @param {() => { codes: object[] }} opts.getVault
+   * @param {(code: object|null, prefilled?: object) => void} opts.openCodeDialog
+   * @param {(key: string, vars?: object) => string} [opts.t]
+   * @param {string} [opts.libUrl] html5-qrcode fallback script
+   */
   function bindVaultScanUi(opts) {
     const t =
       opts.t ||

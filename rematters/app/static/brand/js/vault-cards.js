@@ -10,7 +10,9 @@
     const categoryName = opts.categoryName(code.category_id);
     const iconsHref = opts.iconsHref || "/brand/icons.svg";
     const qrPrefix = opts.qrApiPrefix || "/api";
-    const hasQr = code.qr_payload || code.manual_code;
+    const hasLabel =
+      (code.qr_payload && String(code.qr_payload).trim().toUpperCase().startsWith("MT:")) ||
+      code.manual_code;
     const icons =
       global.RemattersVaultShareUi?.cardIconButtonsHtml({
         iconsHref,
@@ -29,8 +31,6 @@
         ${code.device_type ? escapeHtml(code.device_type) + " · " : ""}
         <span class="badge">${escapeHtml(categoryName)}</span>
       </div>
-      ${code.manual_code ? `<div class="code-value">${escapeHtml(code.manual_code)}</div>` : ""}
-      ${code.qr_payload ? `<div class="code-value">${escapeHtml(code.qr_payload)}</div>` : ""}
       ${code.notes ? `<p class="code-meta">${escapeHtml(code.notes)}</p>` : ""}
       ${
         code.ha_link?.entity_id
@@ -39,7 +39,11 @@
             }</p>`
           : ""
       }
-      ${hasQr ? `<img class="qr" src="${qrPrefix}/codes/${code.id}/qr.png" alt="QR" />` : ""}
+      ${
+        hasLabel
+          ? `<img class="matter-label" src="${qrPrefix}/codes/${code.id}/label.png" alt="Matter pairing label" width="320" height="440" loading="lazy" />`
+          : ""
+      }
     `;
   }
 

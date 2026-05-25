@@ -320,13 +320,15 @@
   border: 1px solid var(--rm-border);
 }
 
-.code-card img.qr {
-  width: 120px;
-  height: 120px;
-  background: #fff;
+.code-card img.matter-label {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  align-self: center;
+  margin: var(--rm-space-2) auto 0;
   border-radius: var(--rm-radius-sm);
-  align-self: flex-start;
-  border: 1px solid var(--rm-border);
+  background: #fff;
+  box-shadow: var(--rm-shadow-sm);
 }
 
 .share-dialog form {
