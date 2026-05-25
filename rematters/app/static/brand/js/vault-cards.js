@@ -1,18 +1,23 @@
 /**
- * Shared Matter code card markup (Rematters Cloud + HA Ingress).
- * Labels match the English cloud vault UI.
+ * Shared Matter sticker cards (Rematters Cloud + HA Ingress).
  */
 (function (global) {
   const LABELS = { share: "Share", edit: "Edit", delete: "Delete" };
 
+  function hasMtPayload(code) {
+    const q = String(code.qr_payload || "").trim();
+    return q.toUpperCase().startsWith("MT:");
+  }
+
+  function hasLabelContent(code) {
+    return hasMtPayload(code) || String(code.manual_code || "").trim() !== "";
+  }
+
   function buildCodeCardHtml(code, opts) {
     const escapeHtml = opts.escapeHtml;
-    const categoryName = opts.categoryName(code.category_id);
     const iconsHref = opts.iconsHref || "/brand/icons.svg";
-    const qrPrefix = opts.qrApiPrefix || "/api";
-    const hasLabel =
-      (code.qr_payload && String(code.qr_payload).trim().toUpperCase().startsWith("MT:")) ||
-      code.manual_code;
+    const apiPrefix = opts.qrApiPrefix || "/api";
+    const showLabel = hasLabelContent(code);
     const icons =
       global.RemattersVaultShareUi?.cardIconButtonsHtml({
         iconsHref,
@@ -22,43 +27,40 @@
         deleteLabel: LABELS.delete,
       }) || "";
 
+    const labelImg = showLabel
+      ? `<img class="matter-label" src="${apiPrefix}/codes/${code.id}/label.png" alt="" width="342" height="469" loading="lazy" decoding="async" />`
+      : `<div class="matter-label-empty"><span>matter</span><p>No setup code yet</p></div>`;
+
     return `
-      <div class="code-card-top">
-        <h3>${escapeHtml(code.name)}</h3>
-        ${icons}
+      <div class="matter-label-wrap">
+        <div class="card-actions-overlay" aria-hidden="false">${icons}</div>
+        ${labelImg}
       </div>
-      <div class="code-meta">
-        ${code.device_type ? escapeHtml(code.device_type) + " · " : ""}
-        <span class="badge">${escapeHtml(categoryName)}</span>
-      </div>
-      ${code.notes ? `<p class="code-meta">${escapeHtml(code.notes)}</p>` : ""}
-      ${
-        code.ha_link?.entity_id
-          ? `<p class="code-meta">HA: ${escapeHtml(code.ha_link.entity_id)}${
-              code.ha_link.attribute ? "." + escapeHtml(code.ha_link.attribute) : ""
-            }</p>`
-          : ""
-      }
-      ${
-        hasLabel
-          ? `<img class="matter-label" src="${qrPrefix}/codes/${code.id}/label.png" alt="Matter pairing label" width="320" height="440" loading="lazy" />`
-          : ""
-      }
+      <p class="code-card-caption" title="${escapeHtml(code.name)}">${escapeHtml(code.name)}</p>
     `;
   }
 
   function wireCodeCard(card, code, handlers) {
     const shareBtn = card.querySelector("[data-share]");
     if (shareBtn && handlers.onShare) {
-      shareBtn.onclick = () => handlers.onShare(code);
+      shareBtn.onclick = (e) => {
+        e.stopPropagation();
+        handlers.onShare(code);
+      };
     }
     const editBtn = card.querySelector("[data-edit]");
     if (editBtn && handlers.onEdit) {
-      editBtn.onclick = () => handlers.onEdit(code);
+      editBtn.onclick = (e) => {
+        e.stopPropagation();
+        handlers.onEdit(code);
+      };
     }
     const delBtn = card.querySelector("[data-delete]");
     if (delBtn && handlers.onDelete) {
-      delBtn.onclick = () => handlers.onDelete(code.id);
+      delBtn.onclick = (e) => {
+        e.stopPropagation();
+        handlers.onDelete(code.id);
+      };
     }
   }
 
@@ -79,6 +81,8 @@
 
   global.RemattersVaultCards = {
     LABELS,
+    hasMtPayload,
+    hasLabelContent,
     buildCodeCardHtml,
     wireCodeCard,
     categoryNameDefault,

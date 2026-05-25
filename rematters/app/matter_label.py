@@ -1,4 +1,4 @@
-"""Matter-style pairing label PNG (logo, QR, manual code)."""
+"""Matter-style pairing label PNG (matches device sticker layout)."""
 
 from __future__ import annotations
 
@@ -13,6 +13,10 @@ from matter_payload import display_manual, qr_encode_payload
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 WORDMARK = os.path.join(STATIC_DIR, "brand", "matter-wordmark.png")
 
+LABEL_W = 342
+LABEL_H_WITH_QR = 469
+LABEL_H_NO_QR = 200
+
 
 def label_png_bytes(manual_code: str, qr_payload: str) -> bytes | None:
     manual = display_manual(manual_code)
@@ -20,37 +24,36 @@ def label_png_bytes(manual_code: str, qr_payload: str) -> bytes | None:
     if not manual and encode is None:
         return None
 
-    w, h = 320, 440
+    has_qr = encode is not None
+    w, h = LABEL_W, LABEL_H_WITH_QR if has_qr else LABEL_H_NO_QR
+
     img = Image.new("RGB", (w, h), "white")
     draw = ImageDraw.Draw(img)
     draw.rectangle((2, 2, w - 3, h - 3), outline="black", width=2)
 
     if os.path.isfile(WORDMARK):
         logo = Image.open(WORDMARK).convert("RGBA")
-        target_w = 140
+        target_w = 200
         ratio = target_w / logo.width
         logo = logo.resize((target_w, int(logo.height * ratio)), Image.Resampling.LANCZOS)
-        img.paste(logo, ((w - logo.width) // 2, 12), logo)
+        img.paste(logo, ((w - logo.width) // 2, 18), logo)
     else:
-        draw.text((w // 2 - 28, 20), "matter", fill=(30, 30, 30))
+        draw.text((w // 2 - 28, 24), "matter", fill=(30, 30, 30))
 
-    qr_y = 88
-    if encode:
+    if has_qr:
         qr_img = qrcode.make(encode)
-        qr_img = qr_img.resize((200, 200), Image.Resampling.NEAREST)
-        img.paste(qr_img, ((w - 200) // 2, qr_y))
-    else:
-        draw.text((52, qr_y + 90), "Add MT: QR payload", fill=(120, 120, 120))
-        draw.text((44, qr_y + 108), "to enable scanning", fill=(120, 120, 120))
+        qr_img = qr_img.resize((220, 220), Image.Resampling.NEAREST)
+        img.paste(qr_img, ((w - 220) // 2, 78))
 
     if manual:
-        font = _mono_font(22)
+        font = _mono_font(24)
+        manual_y = h - 48 if has_qr else h // 2 + 20
         if font:
             bbox = draw.textbbox((0, 0), manual, font=font)
             tw = bbox[2] - bbox[0]
-            draw.text(((w - tw) // 2, h - 56), manual, fill="black", font=font)
+            draw.text(((w - tw) // 2, manual_y), manual, fill="black", font=font)
         else:
-            draw.text(((w - len(manual) * 8) // 2, h - 48), manual, fill="black")
+            draw.text(((w - len(manual) * 8) // 2, manual_y - 10), manual, fill="black")
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")

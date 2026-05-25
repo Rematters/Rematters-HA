@@ -94,7 +94,7 @@ function renderCodes() {
   const Cards = window.RemattersVaultCards;
   for (const code of codes) {
     const card = document.createElement("article");
-    card.className = "code-card";
+    card.className = "code-card matter-sticker-card";
     if (Cards) {
       card.innerHTML = Cards.buildCodeCardHtml(code, {
         escapeHtml,

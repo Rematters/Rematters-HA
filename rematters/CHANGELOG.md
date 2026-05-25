@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.10 — 2026-05-25
+
+- Catalog cards match the physical Matter sticker (wordmark, QR, setup code)
+- Share / Edit / Delete appear in the corner on hover (web and add-on)
+- QR is only drawn when a valid MT: payload is stored (manual-only labels omit QR)
+
 ## 0.1.9 — 2026-05-31
 
 - Matter-style pairing labels on code cards (logo, scannable MT: QR, setup code below)
