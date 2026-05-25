@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.19 (2026-05-26)
+
+- Matter sticker cards: tighter layout (logo/QR/pin same width), 16px corner radius
+- Category color picker: visible swatch + hex, compact click target
+- Language selector: dropdown with Deutsch, Français, Español, Italiano (plus EN/NL)
+- Dialog titles follow selected locale
+
 ## 0.1.18 (2026-05-25)
 
 - Matter scan/save: decode MT: QR and manual pairing codes via CHIP SetupPayload (canonical QR + derived manual code)

@@ -5,9 +5,10 @@
 (function (global) {
   const LABELS = { share: "Share", edit: "Edit", delete: "Delete" };
 
-  /** Official Matter wordmark aspect ratio (viewBox 338.667 × 72.644). */
-  const MATTER_LOGO_WIDTH = 200;
-  const MATTER_LOGO_HEIGHT = 43;
+  /** Match QR width on sticker (viewBox 338.667 × 72.644). */
+  const MATTER_STICKER_QR = 220;
+  const MATTER_LOGO_WIDTH = MATTER_STICKER_QR;
+  const MATTER_LOGO_HEIGHT = Math.round(MATTER_STICKER_QR * (72.644 / 338.667));
 
   function hasMtPayload(code) {
     const q = String(code.qr_payload || "").trim();

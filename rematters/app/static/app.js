@@ -163,8 +163,8 @@ function escapeHtml(s) {
 function openCodeDialog(code = null) {
   const dlg = document.getElementById("code-dialog");
   document.getElementById("code-dialog-title").textContent = code
-    ? "Edit Matter code"
-    : "New Matter code";
+    ? t("code.dialog_edit")
+    : t("code.dialog_new");
   document.getElementById("code-id").value = code?.id || "";
   document.getElementById("code-name").value = code?.name || "";
   document.getElementById("code-device-type").value = code?.device_type || "";
@@ -180,11 +180,12 @@ function openCodeDialog(code = null) {
 function openCategoryDialog(cat = null) {
   const dlg = document.getElementById("category-dialog");
   document.getElementById("category-dialog-title").textContent = cat
-    ? "Edit category"
-    : "New category";
+    ? t("categories.dialog_edit")
+    : t("categories.dialog_new");
   document.getElementById("category-id").value = cat?.id || "";
   document.getElementById("category-name").value = cat?.name || "";
   document.getElementById("category-color").value = cat?.color || "#6366f1";
+  window.RemattersCategoryColor?.sync();
   document.getElementById("category-icon").value =
     cat?.icon || window.RemattersCategoryIcons?.DEFAULT_ICON || "folder";
   ensureCategoryIconPicker()?.setValue(cat?.icon || "folder");
@@ -286,6 +287,7 @@ async function loadBackupStatus() {
 }
 
 function bindUi() {
+  window.RemattersCategoryColor?.bind();
   ensureCategoryIconPicker();
   document.getElementById("btn-add-code").onclick = () => openCodeDialog();
   document.getElementById("btn-add-category").onclick = () => openCategoryDialog();
@@ -358,20 +360,6 @@ function bindUi() {
       alert(err.message);
     }
   };
-
-  const localeSwitch = document.getElementById("locale-switch");
-  if (localeSwitch) {
-    localeSwitch.addEventListener("click", (e) => {
-      const btn = e.target.closest(".locale-btn[data-locale]");
-      if (!btn) return;
-      const code = btn.dataset.locale;
-      if (code === window.RemattersI18n.getLocale()) return;
-      setLocale(code).then(() => {
-        render();
-        loadBackupStatus();
-      });
-    });
-  }
 
   window.addEventListener("rematters:locale", () => {
     render();

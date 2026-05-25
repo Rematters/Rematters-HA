@@ -1,12 +1,22 @@
 /**
  * Ingress UI translations. Default locale: en.
- * Switch via header selector, ?lang=nl, or localStorage rematters_locale.
+ * Switch via header dropdown, ?lang=, or localStorage rematters_locale.
  */
 (function (global) {
   const STORAGE_KEY = "rematters_locale";
   const LOCALE_CHOSEN_KEY = "rematters_locale_chosen";
   const DEFAULT_LOCALE = "en";
-  const SUPPORTED = ["en", "nl"];
+  const SUPPORTED = ["en", "nl", "de", "fr", "es", "it"];
+
+  /** Native language names for the locale dropdown. */
+  const LOCALE_LABELS = {
+    en: "English",
+    nl: "Nederlands",
+    de: "Deutsch",
+    fr: "Français",
+    es: "Español",
+    it: "Italiano",
+  };
 
   let locale = DEFAULT_LOCALE;
   let strings = {};
@@ -51,15 +61,35 @@
       const key = el.getAttribute("data-i18n-title");
       if (key) el.title = t(key);
     });
-    syncLocaleButtons();
+    syncLocaleSelect();
   }
 
-  function syncLocaleButtons() {
-    document.querySelectorAll(".locale-btn[data-locale]").forEach((btn) => {
-      const active = btn.dataset.locale === locale;
-      btn.classList.toggle("is-active", active);
-      btn.setAttribute("aria-pressed", active ? "true" : "false");
+  function syncLocaleSelect() {
+    const sel = document.getElementById("locale-select");
+    if (!sel) return;
+    if (!SUPPORTED.includes(locale)) {
+      sel.value = DEFAULT_LOCALE;
+      return;
+    }
+    sel.value = locale;
+  }
+
+  function bindLocaleSelect() {
+    const sel = document.getElementById("locale-select");
+    if (!sel || sel.dataset.localeBound === "1") return;
+    sel.dataset.localeBound = "1";
+    SUPPORTED.forEach((code) => {
+      const opt = document.createElement("option");
+      opt.value = code;
+      opt.textContent = LOCALE_LABELS[code] || code;
+      sel.appendChild(opt);
     });
+    sel.addEventListener("change", () => {
+      const code = sel.value;
+      if (!SUPPORTED.includes(code) || code === locale) return;
+      setLocale(code);
+    });
+    syncLocaleSelect();
   }
 
   async function setLocale(next) {
@@ -85,6 +115,7 @@
   }
 
   async function initI18n() {
+    bindLocaleSelect();
     locale = resolveLocale();
     document.documentElement.lang = locale;
     try {
@@ -104,5 +135,6 @@
     setLocale,
     getLocale: () => locale,
     SUPPORTED,
+    LOCALE_LABELS,
   };
 })(window);

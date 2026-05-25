@@ -13,9 +13,13 @@ from matter_payload import display_manual, qr_encode_payload
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 WORDMARK = os.path.join(STATIC_DIR, "assets", "matter_logo.png")
 
-LABEL_W = 342
-LABEL_H_WITH_QR = 469
-LABEL_H_NO_QR = 200
+QR_SIZE = 220
+PAD_X = 10
+PAD_Y = 8
+GAP = 6
+LABEL_W = QR_SIZE + 2 * PAD_X + 4  # 2px border each side
+LABEL_H_WITH_QR = PAD_Y + 47 + GAP + QR_SIZE + GAP + 32 + 10
+LABEL_H_NO_QR = 160
 
 
 def label_png_bytes(manual_code: str, qr_payload: str) -> bytes | None:
@@ -31,23 +35,28 @@ def label_png_bytes(manual_code: str, qr_payload: str) -> bytes | None:
     draw = ImageDraw.Draw(img)
     draw.rectangle((2, 2, w - 3, h - 3), outline="black", width=2)
 
+    logo_h = 0
     if os.path.isfile(WORDMARK):
         logo = Image.open(WORDMARK).convert("RGBA")
-        target_w = 200
+        target_w = QR_SIZE
         ratio = target_w / logo.width
         logo = logo.resize((target_w, int(logo.height * ratio)), Image.Resampling.LANCZOS)
-        img.paste(logo, ((w - logo.width) // 2, 18), logo)
+        logo_h = logo.height
+        logo_y = PAD_Y
+        img.paste(logo, ((w - logo.width) // 2, logo_y), logo)
     else:
-        draw.text((w // 2 - 28, 24), "matter", fill=(30, 30, 30))
+        draw.text((w // 2 - 28, PAD_Y + 4), "matter", fill=(30, 30, 30))
+        logo_h = 20
 
     if has_qr:
         qr_img = qrcode.make(encode)
-        qr_img = qr_img.resize((220, 220), Image.Resampling.NEAREST)
-        img.paste(qr_img, ((w - 220) // 2, 78))
+        qr_img = qr_img.resize((QR_SIZE, QR_SIZE), Image.Resampling.NEAREST)
+        qr_y = PAD_Y + logo_h + GAP
+        img.paste(qr_img, ((w - QR_SIZE) // 2, qr_y), qr_img)
 
     if manual:
-        font = _mono_font(24)
-        manual_y = h - 48 if has_qr else h // 2 + 20
+        font = _mono_font(22)
+        manual_y = h - 36 if has_qr else h // 2 + 20
         if font:
             bbox = draw.textbbox((0, 0), manual, font=font)
             tw = bbox[2] - bbox[0]
