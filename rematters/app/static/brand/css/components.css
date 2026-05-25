@@ -53,6 +53,7 @@ a:hover {
 .rm-glass {
   position: relative;
   overflow: hidden;
+  isolation: isolate;
   background: var(--rm-surface-glass);
   backdrop-filter: blur(var(--rm-blur)) saturate(1.35);
   -webkit-backdrop-filter: blur(var(--rm-blur)) saturate(1.35);
@@ -77,6 +78,11 @@ a:hover {
 
 :root[data-theme="dark"] .rm-glass::before {
   opacity: 0.15;
+}
+
+.rm-glass > * {
+  position: relative;
+  z-index: 1;
 }
 
 .rm-btn {

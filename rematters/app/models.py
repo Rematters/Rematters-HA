@@ -50,7 +50,7 @@ class MatterCode(BaseModel):
 class VaultMeta(BaseModel):
     version: int = 1
     exported_at: Optional[str] = None
-    addon_version: str = "0.1.6"
+    addon_version: str = "0.1.16"
 
 
 class Vault(BaseModel):

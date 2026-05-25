@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.16 (2026-05-25)
+
+- Sync brand icons and components.css from monorepo
+- Align add-on API and health endpoint version strings with release
+
 ## 0.1.15 (2026-05-25)
 
 - Matter cards use official `matter_logo.svg` wordmark (all platforms)
