@@ -47,7 +47,7 @@
   "alert.cloud_sync_ok": "Vault synced with Rematters Cloud.",
   "alert.cloud_sync_fail": "Cloud sync failed. Check add-on options.",
   "backup.gdrive_active": "Google Drive backup active (every {hours}h)",
-  "backup.gdrive_inactive": "Google Drive not configured — configure under Settings → Apps → Rematters.",
+  "backup.gdrive_inactive": "Google Drive not configured. Configure under Settings → Apps → Rematters.",
   "lang.label": "Language",
   "scan.title": "Scan Matter code",
   "scan.hint_native": "Point your camera at the Matter QR on the device or manual.",

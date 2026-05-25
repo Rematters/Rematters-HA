@@ -35,7 +35,7 @@ def card_png_bytes(
         draw.text((32, y), _truncate(manual_code.strip(), 32), fill=(15, 23, 42))
 
     img.paste(qr_img, ((w - 280) // 2, 140))
-    draw.text((32, h - 36), "Rematters — Matter pairing code", fill=(99, 102, 241))
+    draw.text((32, h - 36), "Rematters Matter pairing code", fill=(99, 102, 241))
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")

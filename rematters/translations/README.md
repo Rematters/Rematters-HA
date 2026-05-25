@@ -4,8 +4,8 @@
 
 Strings for the **add-on options** screen in Home Assistant are in:
 
-- `en.yaml` — English (default)
-- `nl.yaml` — Dutch
+- `en.yaml`: English (default)
+- `nl.yaml`: Dutch
 
 Home Assistant picks the file matching the user's UI language automatically.
 
@@ -15,8 +15,8 @@ To add a language, copy `en.yaml` to e.g. `de.yaml` and translate the `configura
 
 The management UI uses JSON locale files:
 
-- `app/static/locales/en.json` — default
-- `app/static/locales/nl.json` — Dutch (switch via language dropdown in the UI)
+- `app/static/locales/en.json`: default
+- `app/static/locales/nl.json`: Dutch (switch via language dropdown in the UI)
 
 Add a locale:
 

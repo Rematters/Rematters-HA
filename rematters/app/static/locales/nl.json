@@ -47,7 +47,7 @@
   "alert.cloud_sync_ok": "Kluis gesynchroniseerd met Rematters Cloud.",
   "alert.cloud_sync_fail": "Cloud sync mislukt. Controleer add-on opties.",
   "backup.gdrive_active": "Google Drive backup actief (elke {hours}u)",
-  "backup.gdrive_inactive": "Google Drive niet geconfigureerd — configureer via Instellingen → Apps → Rematters.",
+  "backup.gdrive_inactive": "Google Drive niet geconfigureerd. Configureer via Instellingen → Apps → Rematters.",
   "lang.label": "Taal",
   "scan.title": "Matter-code scannen",
   "scan.hint_native": "Richt de camera op de Matter-QR op het apparaat of in de handleiding.",

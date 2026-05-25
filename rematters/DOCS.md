@@ -1,14 +1,14 @@
 # Rematters documentation
 
-**Rematters** = *Remembers* + *Matter* — keep binding codes so you can find them later.
+**Rematters** = *Remembers* + *Matter*: keep binding codes so you can find them later.
 
 ## Usage
 
-1. **Categories** — group codes by room, vendor, or your own logic (right-click a category to edit).
-2. **Add codes** — enter at least a name plus manual code and/or `MT:` QR string.
-3. **HA link** — optional `entity_id` + attribute; use **Pull from HA** to sync the value.
-4. **Export** — download `rematters-export.json` for backup or the [Rematters Viewer](https://viewer.rematters.casa).
-5. **Backup now** — local copy plus Google Drive upload (when configured).
+1. **Categories:** group codes by room, vendor, or your own logic (right-click a category to edit).
+2. **Add codes:** enter at least a name plus manual code and/or `MT:` QR string.
+3. **HA link:** optional `entity_id` + attribute; use **Pull from HA** to sync the value.
+4. **Export:** download `rematters-export.json` for backup or the [Rematters Viewer](https://viewer.rematters.casa).
+5. **Backup now:** local copy plus Google Drive upload (when configured).
 
 ## Languages
 
@@ -81,7 +81,7 @@ All routes are relative to the Ingress base under `./api/`:
 3. **Save** and **restart** the add-on (sync runs on startup and every 15 minutes).
 4. Optional: open Ingress → **Cloud sync** for an immediate merge.
 
-Sync is **bidirectional** (newest `updated_at` per item wins). The web vault does not push to Home Assistant by itself — the add-on pulls from and pushes to the cloud API.
+Sync is **bidirectional** (newest `updated_at` per item wins). The web vault does not push to Home Assistant by itself; the add-on pulls from and pushes to the cloud API.
 
 ## Security
 

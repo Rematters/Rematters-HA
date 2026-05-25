@@ -19,7 +19,7 @@
 
 ---
 
-**Rematters** — Home Assistant add-on. Store, categorize, export, and back up Matter pairing codes.
+**Rematters:** Home Assistant add-on. Store, categorize, export, and back up Matter pairing codes.
 
 | | |
 |---|---|
@@ -53,7 +53,7 @@ Rematters-HA/                 ← this repo (HA Apps repository root)
 
 ## Documentation
 
-- [DOCS.md](rematters/DOCS.md) — OAuth, JSON schema, API
+- [DOCS.md](rematters/DOCS.md): OAuth, JSON schema, API
 - [CHANGELOG.md](rematters/CHANGELOG.md)
 
 ## Development
