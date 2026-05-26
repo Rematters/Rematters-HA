@@ -93,4 +93,4 @@ Sync is **bidirectional** (newest `updated_at` per item wins). The web vault doe
 
 Users without HA can open exports at **[viewer.rematters.casa](https://viewer.rematters.casa)** ([Rematters-Webviewer](https://github.com/Rematters/Rematters-Webviewer)). The viewer validates `codes[]` and renders QR codes locally in the browser.
 
-Product site: [rematters.casa](https://rematters.casa) · [Rematters-Web](https://github.com/Rematters/Rematters-Web)
+Product site: [rematters.casa](https://rematters.casa)

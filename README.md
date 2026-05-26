@@ -24,9 +24,7 @@
 | | |
 |---|---|
 | **Website** | [rematters.casa](https://rematters.casa) |
-| **Viewer** | [viewer.rematters.casa](https://viewer.rematters.casa) |
-| **Landing / docs** | [Rematters-Web](https://github.com/Rematters/Rematters-Web) |
-| **Web viewer repo** | [Rematters-Webviewer](https://github.com/Rematters/Rematters-Webviewer) |
+| **Viewer** | [viewer.rematters.casa](https://viewer.rematters.casa) · [Rematters-Webviewer](https://github.com/Rematters/Rematters-Webviewer) |
 
 ## Add this repository in Home Assistant
 
