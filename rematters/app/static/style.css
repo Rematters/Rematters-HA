@@ -334,6 +334,8 @@
 
 .matter-sticker-box {
   --matter-sticker-qr: 220px;
+  --matter-sticker-quiet: 4px;
+  --matter-sticker-inner: calc(var(--matter-sticker-qr) - 2 * var(--matter-sticker-quiet));
   --matter-sticker-pad-x: 10px;
   --matter-sticker-pad-y: 8px;
   --matter-sticker-gap: 6px;
@@ -371,7 +373,7 @@
 
 .matter-sticker-logo {
   display: block;
-  width: var(--matter-sticker-qr);
+  width: var(--matter-sticker-inner);
   max-width: 100%;
   height: auto;
   margin: 0 auto;

@@ -12,7 +12,8 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
-from fastapi.staticfiles import StaticFiles
+from starlette.staticfiles import StaticFiles
+from starlette.types import Scope
 from pydantic import BaseModel
 
 from gdrive import GDriveBackup, load_options
@@ -39,6 +40,19 @@ _LOGGER = logging.getLogger("rematters")
 ALLOWED_INGRESS_IP = "172.30.32.2"
 PORT = int(os.environ.get("REMATTERS_PORT", "8099"))
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+
+
+class IngressStaticFiles(StaticFiles):
+    """Ingress UI assets: avoid stale CSS/JS after add-on updates."""
+
+    async def get_response(self, path: str, scope: Scope):
+        response = await super().get_response(path, scope)
+        if response.status_code == 200:
+            ctype = (response.headers.get("content-type") or "").lower()
+            if any(t in ctype for t in ("javascript", "css", "html", "json")):
+                response.headers["Cache-Control"] = "no-cache, must-revalidate"
+        return response
+
 
 storage = VaultStorage()
 ha = HomeAssistantClient()
@@ -159,7 +173,7 @@ async def lifespan(app: FastAPI):
         scheduler.shutdown(wait=False)
 
 
-app = FastAPI(title="Rematters", version="0.1.22", lifespan=lifespan)
+app = FastAPI(title="Rematters", version="0.1.23", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -516,7 +530,7 @@ async def cloud_sync_now():
 # --- Static UI (relative paths for ingress) ---
 
 if os.path.isdir(STATIC_DIR):
-    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    app.mount("/static", IngressStaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.get("/")
@@ -524,7 +538,7 @@ async def index():
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.isfile(index_path):
         return FileResponse(index_path)
-    return JSONResponse({"service": "rematters", "version": "0.1.22"})
+    return JSONResponse({"service": "rematters", "version": "0.1.23"})
 
 
 if __name__ == "__main__":

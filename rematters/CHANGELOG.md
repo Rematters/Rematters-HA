@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.23 (2026-05-26)
+
+- Matter logo width matches visible QR modules (inner quiet-zone alignment)
+- Ingress static assets: `Cache-Control: no-cache` for CSS/JS after updates
+- Cache-bust query params on all stylesheet links in index.html
+
 ## 0.1.22 (2026-05-26)
 
 - QR PNG: crop quiet-zone margins so modules fill the sticker slot (logo and QR align visually)
