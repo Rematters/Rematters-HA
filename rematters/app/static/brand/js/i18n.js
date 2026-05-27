@@ -6,7 +6,7 @@
   const STORAGE_KEY = "rematters_locale";
   const LOCALE_CHOSEN_KEY = "rematters_locale_chosen";
   const DEFAULT_LOCALE = "en";
-  const SUPPORTED = ["en", "nl", "de", "fr", "es", "it"];
+  const SUPPORTED = ["en", "nl", "de", "fr", "es", "it", "pt-br", "pt"];
 
   const LOCALE_LABELS = {
     en: "English",
@@ -15,6 +15,8 @@
     fr: "Français",
     es: "Español",
     it: "Italiano",
+    "pt-br": "Português (Brasil)",
+    pt: "Português (Portugal)",
   };
 
   const LOCALE_FLAGS = {
@@ -24,6 +26,8 @@
     fr: "🇫🇷",
     es: "🇪🇸",
     it: "🇮🇹",
+    "pt-br": "🇧🇷",
+    pt: "🇵🇹",
   };
 
   function localeBase() {

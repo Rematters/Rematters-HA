@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.25 (2026-05-27)
+
+- Portuguese (Brazil) and Portuguese (Portugal) UI translations (thanks @mzspicoli)
+- HA add-on config panel translations for `pt` and `pt-br`
+- Ingress language dropdown: BR and PT flags wired in shared brand i18n
+
 ## 0.1.24 (2026-05-27)
 
 - Fix cloud sync crash when `meta.deletions.categories` (or `codes`) is stored as JSON `[]` instead of `{}`
