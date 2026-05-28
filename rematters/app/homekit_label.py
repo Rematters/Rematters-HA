@@ -11,14 +11,14 @@ from qrcode.image.svg import SvgPathImage
 
 from homekit_payload import decode_pairing_from_uri, pairing_digits, qr_encode_payload
 
-_SYMBOLS_PATH = (
-    Path(__file__).resolve().parent / "static" / "brand" / "homekit" / "digit-symbols.inc.xml"
-)
-_FALLBACK_SYMBOLS = Path(__file__).resolve().parents[2] / "brand" / "homekit" / "digit-symbols.inc.xml"
-
-
 def _load_digit_symbols() -> str:
-    for path in (_SYMBOLS_PATH, _FALLBACK_SYMBOLS):
+    here = Path(__file__).resolve().parent
+    candidates = [
+        here / "static" / "brand" / "homekit" / "digit-symbols.inc.xml",
+    ]
+    for parent in here.parents:
+        candidates.append(parent / "brand" / "homekit" / "digit-symbols.inc.xml")
+    for path in candidates:
         if path.is_file():
             return path.read_text(encoding="utf-8")
     raise FileNotFoundError("HomeKit digit symbols XML not found")

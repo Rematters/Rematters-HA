@@ -242,7 +242,7 @@ async def lifespan(app: FastAPI):
         scheduler.shutdown(wait=False)
 
 
-app = FastAPI(title="Rematters", version="0.1.26", lifespan=lifespan)
+app = FastAPI(title="Rematters", version="0.1.27", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -692,7 +692,7 @@ async def index():
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.isfile(index_path):
         return FileResponse(index_path)
-    return JSONResponse({"service": "rematters", "version": "0.1.26"})
+    return JSONResponse({"service": "rematters", "version": "0.1.27"})
 
 
 if __name__ == "__main__":

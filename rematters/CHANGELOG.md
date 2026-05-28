@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.27 (2026-05-28)
+
+- Fix startup crash: HomeKit label module no longer resolves monorepo paths at import time (`IndexError` on `/app/homekit_label.py`)
+
 ## 0.1.26 (2026-05-28)
 
 - HomeKit pairing codes (`X-HM://`): setup URI, quartile QR, official label card (SVG)
