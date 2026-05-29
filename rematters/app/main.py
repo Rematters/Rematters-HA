@@ -36,6 +36,7 @@ from homekit_qr_image import qr_png_bytes as homekit_qr_png_bytes
 from homekit_payload import (
     normalize_fields as normalize_homekit_fields,
     pairing_digits as homekit_pairing_digits,
+    parse_setup_uri,
     qr_encode_payload as homekit_qr_encode,
 )
 from zwave_label import card_svg_for_code as zwave_card_svg_for_code
@@ -103,8 +104,8 @@ def _normalize_qr_key(value: str) -> str:
 
 
 def _normalize_homekit_qr_key(value: str) -> str:
-    s = (value or "").strip().upper()
-    return s if s.startswith("X-HM://") else ""
+    parsed = parse_setup_uri(str(value or ""))
+    return parsed["uri"].upper() if parsed else ""
 
 
 def _code_protocol(candidate: dict | MatterCode) -> str:
@@ -242,7 +243,7 @@ async def lifespan(app: FastAPI):
         scheduler.shutdown(wait=False)
 
 
-app = FastAPI(title="Rematters", version="0.1.27", lifespan=lifespan)
+app = FastAPI(title="Rematters", version="0.1.28", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -692,7 +693,7 @@ async def index():
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.isfile(index_path):
         return FileResponse(index_path)
-    return JSONResponse({"service": "rematters", "version": "0.1.27"})
+    return JSONResponse({"service": "rematters", "version": "0.1.28"})
 
 
 if __name__ == "__main__":

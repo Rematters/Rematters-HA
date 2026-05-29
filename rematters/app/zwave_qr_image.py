@@ -13,10 +13,9 @@ CROP_PAD_PX = 4
 
 def qr_png_bytes(payload: str, size: int = DEFAULT_QR_SIZE) -> bytes:
     qr = qrcode.QRCode(
-        version=3,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
         box_size=8,
-        border=1,
+        border=4,
     )
     qr.add_data(payload)
     qr.make(fit=True)

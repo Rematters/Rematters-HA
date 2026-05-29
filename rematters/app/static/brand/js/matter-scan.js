@@ -1,5 +1,5 @@
 /**
- * Matter QR / manual code parsing and duplicate detection (Rematters vault).
+ * Matter / HomeKit / Z-Wave QR parsing and duplicate detection (Rematters vault).
  */
 (function (global) {
   const Payload = global.RemattersMatterPayload;
@@ -21,9 +21,18 @@
     return idx >= 0 ? s.substring(idx) : "";
   }
 
+  function extractHomeKitUri(text) {
+    const upper = String(text || "").toUpperCase();
+    const idx = upper.indexOf("X-HM://");
+    if (idx < 0) return "";
+    const slice = String(text).slice(idx).trim();
+    const end = slice.search(/\s/);
+    return end > 0 ? slice.slice(0, end) : slice;
+  }
+
   /**
    * @param {string} raw
-   * @returns {{ manual_code: string, qr_payload: string } | null}
+   * @returns {object|null}
    */
   function parseScannedText(raw) {
     let text = String(raw || "").trim();
@@ -37,30 +46,71 @@
       /* keep original */
     }
 
+    const HK = global.RemattersHomeKitPayload;
+    const ZW = global.RemattersZWavePayload;
+
+    const homekitUri = extractHomeKitUri(text);
+    if (homekitUri && HK) {
+      const n = HK.normalizeFields("", homekitUri);
+      return {
+        code_type: "homekit",
+        manual_code: n.manual_code,
+        qr_payload: n.qr_payload,
+        setup_id: n.setup_id,
+        homekit_category: n.homekit_category,
+        homekit_flag: n.homekit_flag,
+      };
+    }
+
+    const allDigits = text.replace(/\D/g, "");
+    if (ZW && allDigits.length >= 90 && allDigits.startsWith("90")) {
+      const n = ZW.normalizeFields("", allDigits);
+      return {
+        code_type: "zwave",
+        manual_code: n.manual_code,
+        qr_payload: n.qr_payload,
+        zwave_pin: n.zwave_pin,
+      };
+    }
+
     if (Payload && typeof Payload.normalizeScannedOrEntered === "function") {
       const normalized = Payload.normalizeScannedOrEntered("", text);
       if (normalized && (normalized.qr_payload || normalized.manual_code)) {
-        return normalized;
+        return { code_type: "matter", ...normalized };
       }
-      const digits = text.replace(/\D/g, "");
-      if (digits.length === 11 || digits.length === 21) {
-        const fromManual = Payload.normalizeScannedOrEntered(digits, "");
-        if (fromManual) return fromManual;
+      if (allDigits.length === 11 || allDigits.length === 21) {
+        const fromManual = Payload.normalizeScannedOrEntered(allDigits, "");
+        if (fromManual) return { code_type: "matter", ...fromManual };
       }
     }
 
     const upper = text.toUpperCase();
     if (upper.startsWith("MT:")) {
-      return { qr_payload: text.trim(), manual_code: "" };
+      return { code_type: "matter", qr_payload: text.trim(), manual_code: "" };
     }
 
-    const digits = text.replace(/\D/g, "");
-    if (digits.length === 11) {
-      return { manual_code: formatManual11(digits), qr_payload: "" };
+    if (allDigits.length === 11) {
+      return {
+        code_type: "matter",
+        manual_code: formatManual11(allDigits),
+        qr_payload: "",
+      };
+    }
+
+    if (HK && allDigits.length === 8) {
+      const n = HK.normalizeFields(allDigits, "");
+      return {
+        code_type: "homekit",
+        manual_code: n.manual_code,
+        qr_payload: n.qr_payload,
+        setup_id: n.setup_id,
+        homekit_category: n.homekit_category,
+        homekit_flag: n.homekit_flag,
+      };
     }
 
     if (/^MT/i.test(text) || text.length > 20) {
-      return { qr_payload: text.trim(), manual_code: "" };
+      return { code_type: "matter", qr_payload: text.trim(), manual_code: "" };
     }
 
     return null;
@@ -68,7 +118,7 @@
 
   /**
    * @param {Array<{id?: string, name?: string, manual_code?: string, qr_payload?: string}>} codes
-   * @param {{ manual_code?: string, qr_payload?: string }} candidate
+   * @param {object} candidate
    * @param {string|null} [excludeId]
    */
   function findDuplicate(codes, candidate, excludeId = null) {
@@ -77,12 +127,7 @@
     let proto = String(candidate.code_type || "").toLowerCase();
     if (proto !== "zwave" && proto !== "homekit") {
       if (ZW?.hasScannableQr?.(candidate.qr_payload)) proto = "zwave";
-      else if (
-        String(candidate.qr_payload || "")
-          .toUpperCase()
-          .startsWith("X-HM://")
-      )
-        proto = "homekit";
+      else if (HK?.hasScannableQr?.(candidate.qr_payload)) proto = "homekit";
       else proto = "matter";
     }
 
@@ -94,8 +139,11 @@
       if (dskKey.length !== 40 && !qrKey) return null;
       for (const code of codes) {
         if (excludeId && code.id === excludeId) continue;
-        if (String(code.code_type || "").toLowerCase() !== "zwave" &&
-            !ZW.hasScannableQr?.(code.qr_payload)) continue;
+        if (
+          String(code.code_type || "").toLowerCase() !== "zwave" &&
+          !ZW.hasScannableQr?.(code.qr_payload)
+        )
+          continue;
         const exDsk = ZW.formatDsk(code.manual_code).replace(/\D/g, "");
         if (dskKey && exDsk === dskKey) return code;
         const exQr = ZW.extractQrString

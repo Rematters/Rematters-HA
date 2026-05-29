@@ -167,17 +167,47 @@ function escapeHtml(s) {
   return d.innerHTML;
 }
 
-function fillHomeKitCategorySelect() {
-  const sel = document.getElementById("code-homekit-category");
+function syncHomeKitDerived() {
   const HK = window.RemattersHomeKitPayload;
-  if (!sel || !HK) return;
-  sel.innerHTML = "";
-  for (const key of HK.CATEGORY_KEYS) {
-    const opt = document.createElement("option");
-    opt.value = key;
-    opt.textContent = key;
-    sel.appendChild(opt);
+  const hint = document.getElementById("code-homekit-derived");
+  const uriEl = document.getElementById("code-homekit-uri");
+  if (!HK || !hint || !uriEl) return;
+  const parsed = HK.parseSetupUri(uriEl.value.trim());
+  if (!parsed) {
+    hint.classList.add("hidden");
+    hint.textContent = "";
+    return;
   }
+  const decoded = HK.decodeFieldsFromUri(parsed.uri);
+  let pin = HK.pairingDigits(
+    document.getElementById("code-homekit-pairing")?.value || ""
+  );
+  if (!pin && HK.decodePairingFromUri) {
+    pin = HK.decodePairingFromUri(parsed.uri);
+  }
+  const pairingEl = document.getElementById("code-homekit-pairing");
+  if (pin && pairingEl && !pairingEl.value.trim()) {
+    pairingEl.value = HK.formatPairingDisplay(pin);
+  }
+  document.getElementById("code-homekit-setup-id").value =
+    decoded.setup_id || parsed.setupId || "";
+  if (decoded.homekit_category) {
+    document.getElementById("code-homekit-category").value =
+      decoded.homekit_category;
+  }
+  const parts = [];
+  if (pin) {
+    parts.push(
+      `${t("code.homekit_pairing")}: ${HK.formatPairingDisplay(pin)}`
+    );
+  }
+  const sid = decoded.setup_id || parsed.setupId;
+  if (sid) parts.push(`Setup ID: ${sid}`);
+  if (decoded.homekit_category) {
+    parts.push(`${t("code.homekit_category")}: ${decoded.homekit_category}`);
+  }
+  hint.textContent = parts.join(" · ");
+  hint.classList.toggle("hidden", parts.length === 0);
 }
 
 function syncCodeTypeFields() {
@@ -185,8 +215,6 @@ function syncCodeTypeFields() {
   document.getElementById("code-fields-matter")?.classList.toggle("hidden", type !== "matter");
   document.getElementById("code-fields-homekit")?.classList.toggle("hidden", type !== "homekit");
   document.getElementById("code-fields-zwave")?.classList.toggle("hidden", type !== "zwave");
-  const scanBtn = document.getElementById("btn-scan-in-form");
-  if (scanBtn) scanBtn.disabled = type !== "matter";
 }
 
 function openCodeDialog(code = null) {
@@ -208,10 +236,11 @@ function openCodeDialog(code = null) {
   document.getElementById("code-qr").value = code?.qr_payload || "";
   document.getElementById("code-homekit-pairing").value = code?.manual_code || "";
   document.getElementById("code-homekit-setup-id").value = code?.setup_id || "";
-  document.getElementById("code-homekit-category").value =
-    code?.homekit_category || "other";
+  const catEl = document.getElementById("code-homekit-category");
+  if (catEl) catEl.value = code?.homekit_category || "other";
   document.getElementById("code-homekit-uri").value =
     proto === "homekit" ? code?.qr_payload || "" : "";
+  if (proto === "homekit") syncHomeKitDerived();
   document.getElementById("code-zwave-dsk").value =
     proto === "zwave" ? code?.manual_code || "" : "";
   document.getElementById("code-zwave-qr").value =
@@ -251,7 +280,8 @@ async function saveCode(e) {
       document.getElementById("code-homekit-uri").value.trim(),
       {
         setup_id: document.getElementById("code-homekit-setup-id").value.trim(),
-        homekit_category: document.getElementById("code-homekit-category").value,
+        homekit_category:
+          document.getElementById("code-homekit-category").value || "other",
       }
     );
     body = {
@@ -383,8 +413,13 @@ async function loadBackupStatus() {
 function bindUi() {
   window.RemattersCategoryColor?.bind();
   ensureCategoryIconPicker();
-  fillHomeKitCategorySelect();
   document.getElementById("code-type").onchange = syncCodeTypeFields;
+  document
+    .getElementById("code-homekit-uri")
+    ?.addEventListener("input", syncHomeKitDerived);
+  document
+    .getElementById("code-homekit-pairing")
+    ?.addEventListener("input", syncHomeKitDerived);
   document.getElementById("btn-add-code").onclick = () => openCodeDialog();
   document.getElementById("btn-add-category").onclick = () => openCategoryDialog();
   document.getElementById("code-form").onsubmit = saveCode;
@@ -463,7 +498,12 @@ function bindUi() {
   });
 }
 
-window.RemattersUI = { refreshBackupStatus: loadBackupStatus };
+window.RemattersUI = {
+  refreshBackupStatus: loadBackupStatus,
+  syncCodeTypeFields,
+  syncHomeKitDerived,
+  openCodeDialog,
+};
 
 function bindShareUiOnce() {
   if (!window.RemattersVaultShareUi || shareUi) return;

@@ -26,6 +26,41 @@
     const readerId = "scan-reader";
     const fileInput = document.getElementById("scan-file-input");
 
+    function applyParsedToForm(parsed) {
+      const codeType = parsed.code_type || "matter";
+      const typeEl = document.getElementById("code-type");
+      if (typeEl) typeEl.value = codeType;
+      global.RemattersUI?.syncCodeTypeFields?.();
+
+      if (codeType === "homekit") {
+        document.getElementById("code-homekit-uri").value =
+          parsed.qr_payload || "";
+        document.getElementById("code-homekit-pairing").value =
+          parsed.manual_code || "";
+        if (parsed.setup_id) {
+          document.getElementById("code-homekit-setup-id").value =
+            parsed.setup_id;
+        }
+        if (parsed.homekit_category) {
+          document.getElementById("code-homekit-category").value =
+            parsed.homekit_category;
+        }
+        global.RemattersUI?.syncHomeKitDerived?.();
+      } else if (codeType === "zwave") {
+        document.getElementById("code-zwave-dsk").value =
+          parsed.manual_code || "";
+        document.getElementById("code-zwave-qr").value = parsed.qr_payload || "";
+      } else {
+        document.getElementById("code-manual").value = parsed.manual_code || "";
+        document.getElementById("code-qr").value = parsed.qr_payload || "";
+      }
+
+      const nameEl = document.getElementById("code-name");
+      if (nameEl && !nameEl.value.trim()) {
+        nameEl.value = t("scan.default_name");
+      }
+    }
+
     function handleParsedText(text) {
       const parsed = global.RemattersScan.parseScannedText(text);
       if (!parsed) {
@@ -39,7 +74,9 @@
         excludeId || null
       );
       if (dup) {
-        const msg = t("scan.duplicate", { name: dup.name || t("scan.unnamed") });
+        const msg = t("scan.duplicate", {
+          name: dup.name || t("scan.unnamed"),
+        });
         if (confirm(msg + "\n\n" + t("scan.duplicate_open"))) {
           scanDlg?.close();
           opts.openCodeDialog(dup);
@@ -48,12 +85,7 @@
       }
       scanDlg?.close();
       opts.openCodeDialog(null);
-      document.getElementById("code-manual").value = parsed.manual_code || "";
-      document.getElementById("code-qr").value = parsed.qr_payload || "";
-      const nameEl = document.getElementById("code-name");
-      if (nameEl && !nameEl.value.trim()) {
-        nameEl.value = t("scan.default_name");
-      }
+      applyParsedToForm(parsed);
     }
 
     function openScanDialog() {
@@ -90,8 +122,15 @@
       scanDlg?.close();
     }
 
-    document.getElementById("btn-scan-code")?.addEventListener("click", openScanDialog);
-    document.getElementById("btn-scan-in-form")?.addEventListener("click", openScanDialog);
+    const scanButtons = [
+      "btn-scan-code",
+      "btn-scan-in-form",
+      "btn-scan-homekit",
+      "btn-scan-zwave",
+    ];
+    for (const id of scanButtons) {
+      document.getElementById(id)?.addEventListener("click", openScanDialog);
+    }
     document.getElementById("scan-stop")?.addEventListener("click", closeScanDialog);
     scanDlg?.addEventListener("close", () => global.RemattersScanner.stopCamera());
 

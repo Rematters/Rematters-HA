@@ -523,6 +523,17 @@
   margin: 0 auto;
 }
 
+.form-hint {
+  margin: 0.35rem 0 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--rm-text-muted, #64748b);
+}
+
+.homekit-pairing-optional {
+  margin-top: 0.25rem;
+}
+
 .code-card-caption {
   margin: 0.35rem 0 0;
   width: 100%;

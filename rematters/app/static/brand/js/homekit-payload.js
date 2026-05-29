@@ -54,6 +54,12 @@
     return s.length === 4 ? s : "";
   }
 
+  function normalizeUriBody(body) {
+    return String(body || "")
+      .replace(/[^0-9A-Za-z]/g, "")
+      .toUpperCase();
+  }
+
   function toBase36Upper(n, width) {
     const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let num = BigInt(n);
@@ -88,19 +94,48 @@
     return CATEGORIES[name] ?? CATEGORIES.other;
   }
 
+  function categoryNameForId(categoryId) {
+    for (const [name, id] of Object.entries(CATEGORIES)) {
+      if (id === categoryId) return name;
+    }
+    return "other";
+  }
+
+  function decodePayloadFromBase36(base36) {
+    const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let n = 0n;
+    for (const ch of String(base36 || "").toUpperCase()) {
+      const idx = alphabet.indexOf(ch);
+      if (idx < 0) return {};
+      n = n * 36n + BigInt(idx);
+    }
+    const password = Number(n & 0x7fffffffn);
+    let rest = Number(n >> 27n);
+    const flag = rest & 0xf;
+    rest >>= 4;
+    const categoryId = rest & 0xff;
+    return { password, flag, categoryId };
+  }
+
   function parseSetupUri(uri) {
     const s = String(uri || "").trim();
     if (!s.toUpperCase().startsWith("X-HM://")) return null;
-    const body = s.slice(7);
+    const body = normalizeUriBody(s.slice(7));
     if (body.length < 9) return null;
-    const base36 = body.slice(0, 9).toUpperCase();
-    const setupId = normalizeSetupId(body.slice(9, 13));
-    return { base36, setupId, uri: `X-HM://${base36}${setupId}` };
+    const base36 = body.slice(0, 9);
+    let setupId = "";
+    if (body.length >= 13) setupId = normalizeSetupId(body.slice(-4));
+    else if (body.length > 9) setupId = normalizeSetupId(body.slice(9));
+    return { base36, setupId, uri: `X-HM://${body}` };
   }
 
   function decodePairingFromUri(uri) {
     const parsed = parseSetupUri(uri);
     if (!parsed) return "";
+    const fields = decodePayloadFromBase36(parsed.base36);
+    if (fields.password !== undefined) {
+      return String(fields.password).padStart(8, "0").slice(-8);
+    }
     const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let n = 0n;
     for (const ch of parsed.base36) {
@@ -112,6 +147,18 @@
     return String(password).padStart(8, "0").slice(-8);
   }
 
+  function decodeFieldsFromUri(uri) {
+    const parsed = parseSetupUri(uri);
+    if (!parsed) return {};
+    const fields = decodePayloadFromBase36(parsed.base36);
+    const out = { setup_id: parsed.setupId };
+    if (fields.categoryId !== undefined) {
+      out.homekit_flag = fields.flag;
+      out.homekit_category = categoryNameForId(fields.categoryId);
+    }
+    return out;
+  }
+
   function normalizeFields(manualCode, qrPayload, opts = {}) {
     const category = opts.homekit_category || "other";
     const flag = Number(opts.homekit_flag ?? DEFAULT_FLAG);
@@ -121,12 +168,13 @@
     const parsed = qr ? parseSetupUri(qr) : null;
     if (parsed && !digits) digits = decodePairingFromUri(parsed.uri);
     if (parsed) {
+      const decoded = decodeFieldsFromUri(parsed.uri);
       return {
         manual_code: digits,
         qr_payload: parsed.uri,
-        setup_id: parsed.setup_id || setupId,
-        homekit_category: category,
-        homekit_flag: flag,
+        setup_id: decoded.setup_id || setupId,
+        homekit_category: decoded.homekit_category || category,
+        homekit_flag: Number(decoded.homekit_flag ?? flag),
       };
     }
     if (digits.length === 8) {
@@ -154,10 +202,7 @@
   }
 
   function hasScannableQr(qrPayload) {
-    return String(qrPayload || "")
-      .trim()
-      .toUpperCase()
-      .startsWith("X-HM://");
+    return parseSetupUri(qrPayload) !== null;
   }
 
   function codeProtocol(code) {
@@ -180,9 +225,13 @@
     DEFAULT_FLAG,
     pairingDigits,
     normalizeSetupId,
+    normalizeUriBody,
     composeSetupUri,
     categoryIdFor,
+    categoryNameForId,
     parseSetupUri,
+    decodePairingFromUri,
+    decodeFieldsFromUri,
     normalizeFields,
     hasScannableQr,
     codeProtocol,

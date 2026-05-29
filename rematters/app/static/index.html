@@ -136,20 +136,23 @@
       </label>
       </div>
       <div id="code-fields-homekit" class="hidden">
-      <label><span data-i18n="code.homekit_pairing">Pairing code (8 digits)</span>
-        <input type="text" id="code-homekit-pairing" inputmode="numeric" data-i18n-placeholder="code.homekit_pairing_placeholder" placeholder="841-31-633" maxlength="10" />
-      </label>
-      <label><span data-i18n="code.homekit_setup_id">Setup ID (4 characters)</span>
-        <input type="text" id="code-homekit-setup-id" maxlength="4" data-i18n-placeholder="code.homekit_setup_id_placeholder" placeholder="3QYT" />
-      </label>
-      <label><span data-i18n="code.homekit_category">HomeKit category</span>
-        <select id="code-homekit-category"></select>
-      </label>
+      <div class="scan-inline-row">
+        <button type="button" id="btn-scan-homekit" class="rm-btn rm-btn-secondary" data-i18n="action.scan_code">Scan QR</button>
+      </div>
       <label><span data-i18n="code.homekit_uri">Setup URI (X-HM://…)</span>
-        <textarea id="code-homekit-uri" rows="2" data-i18n-placeholder="code.homekit_uri_placeholder" placeholder="X-HM://0081YCYEP3QYT"></textarea>
+        <textarea id="code-homekit-uri" rows="3" data-i18n-placeholder="code.homekit_uri_placeholder" placeholder="X-HM://0081YCYEP3QYT"></textarea>
       </label>
+      <p id="code-homekit-derived" class="form-hint hidden" aria-live="polite"></p>
+      <label class="homekit-pairing-optional"><span data-i18n="code.homekit_pairing">Pairing code (8 digits, optional)</span>
+        <input type="text" id="code-homekit-pairing" inputmode="numeric" data-i18n-placeholder="code.homekit_pairing_placeholder" placeholder="841-31-633" maxlength="11" />
+      </label>
+      <input type="hidden" id="code-homekit-setup-id" />
+      <input type="hidden" id="code-homekit-category" value="other" />
       </div>
       <div id="code-fields-zwave" class="hidden">
+      <div class="scan-inline-row">
+        <button type="button" id="btn-scan-zwave" class="rm-btn rm-btn-secondary" data-i18n="action.scan_code">Scan QR</button>
+      </div>
       <label><span data-i18n="code.zwave_dsk">DSK (40 digits)</span>
         <input type="text" id="code-zwave-dsk" data-i18n-placeholder="code.zwave_dsk_placeholder" placeholder="44383-12478-02618-07852-54448-44375-52483-13627" />
       </label>

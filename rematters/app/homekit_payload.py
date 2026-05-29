@@ -52,6 +52,10 @@ def normalize_setup_id(value: str) -> str:
     return s[:4] if len(s) == 4 else ""
 
 
+def normalize_uri_body(body: str) -> str:
+    return re.sub(r"[^0-9A-Za-z]", "", (body or "")).upper()
+
+
 def to_base36_upper(n: int, width: int = 9) -> str:
     alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     if n <= 0:
@@ -79,7 +83,8 @@ def compose_setup_uri(
     payload = ((payload << 4) | (flag & 0xF)) & 0xFFFFFFFF
     payload = (int(payload) << 27) | (int(password) & 0x7FFFFFFF)
     base36 = to_base36_upper(int(payload), 9)
-    return f"X-HM://{base36}{normalize_setup_id(setup_id)}"
+    sid = normalize_setup_id(setup_id)
+    return f"X-HM://{base36}{sid}"
 
 
 def category_id_for(name: str) -> int:
@@ -87,22 +92,52 @@ def category_id_for(name: str) -> int:
     return HOMEKIT_CATEGORIES.get(key, HOMEKIT_CATEGORIES["other"])
 
 
+def category_name_for_id(category_id: int) -> str:
+    for name, cid in HOMEKIT_CATEGORIES.items():
+        if cid == category_id:
+            return name
+    return "other"
+
+
+def decode_payload_from_base36(base36: str) -> dict[str, int]:
+    try:
+        n = int(base36, 36)
+    except ValueError:
+        return {}
+    password = n & 0x7FFFFFFF
+    rest = n >> 27
+    flag = rest & 0xF
+    rest >>= 4
+    category_id = rest & 0xFF
+    return {"password": password, "flag": flag, "category_id": category_id}
+
+
 def parse_setup_uri(uri: str) -> dict[str, str] | None:
+    """Parse X-HM URI; preserve full alphanumeric body (extended hub payloads)."""
     s = (uri or "").strip()
     if not s.upper().startswith("X-HM://"):
         return None
-    body = s[7:]
+    body = normalize_uri_body(s[7:])
     if len(body) < 9:
         return None
-    base36 = body[:9].upper()
-    setup_id = normalize_setup_id(body[9:13] if len(body) > 9 else "")
-    return {"base36": base36, "setup_id": setup_id, "uri": f"X-HM://{base36}{setup_id}"}
+    base36 = body[:9]
+    setup_id = ""
+    if len(body) >= 13:
+        setup_id = normalize_setup_id(body[-4:])
+    elif len(body) > 9:
+        setup_id = normalize_setup_id(body[9:])
+    return {"base36": base36, "setup_id": setup_id, "uri": f"X-HM://{body}"}
 
 
 def decode_pairing_from_uri(uri: str) -> str:
     parsed = parse_setup_uri(uri)
     if not parsed:
         return ""
+    fields = decode_payload_from_base36(parsed["base36"])
+    if fields:
+        password = fields["password"]
+        digits = str(password)
+        return digits.zfill(8) if len(digits) <= 8 else ""
     try:
         n = int(parsed["base36"], 36)
     except ValueError:
@@ -112,10 +147,23 @@ def decode_pairing_from_uri(uri: str) -> str:
     return digits.zfill(8) if len(digits) <= 8 else ""
 
 
+def decode_fields_from_uri(uri: str) -> dict[str, str | int]:
+    parsed = parse_setup_uri(uri)
+    if not parsed:
+        return {}
+    fields = decode_payload_from_base36(parsed["base36"])
+    out: dict[str, str | int] = {"setup_id": parsed["setup_id"]}
+    if fields:
+        out["homekit_flag"] = int(fields["flag"])
+        out["homekit_category"] = category_name_for_id(int(fields["category_id"]))
+    return out
+
+
 def qr_encode_payload(qr_payload: str, manual_code: str = "") -> str | None:
     qr = (qr_payload or "").strip()
     if qr.upper().startswith("X-HM://"):
-        return qr
+        parsed = parse_setup_uri(qr)
+        return parsed["uri"] if parsed else qr
     digits = pairing_digits(manual_code)
     if digits:
         return None
@@ -130,7 +178,7 @@ def normalize_fields(
     homekit_flag: int = DEFAULT_HOMEKIT_FLAG,
     setup_id: str = "",
 ) -> dict[str, str | int]:
-    """Normalize HomeKit vault fields; (re)build setup URI when possible."""
+    """Normalize HomeKit vault fields; derive category/setup ID from URI when present."""
     qr = (qr_payload or "").strip()
     parsed = parse_setup_uri(qr) if qr else None
     digits = pairing_digits(manual_code)
@@ -138,12 +186,15 @@ def normalize_fields(
     if parsed and not digits:
         digits = decode_pairing_from_uri(parsed["uri"])
     if parsed:
+        decoded = decode_fields_from_uri(parsed["uri"])
         return {
             "manual_code": digits,
             "qr_payload": parsed["uri"],
-            "setup_id": parsed["setup_id"] or sid,
-            "homekit_category": homekit_category,
-            "homekit_flag": int(homekit_flag),
+            "setup_id": str(decoded.get("setup_id") or sid),
+            "homekit_category": str(
+                decoded.get("homekit_category") or homekit_category
+            ),
+            "homekit_flag": int(decoded.get("homekit_flag") or homekit_flag),
         }
     if len(digits) == 8:
         cat_id = category_id_for(homekit_category)
@@ -170,4 +221,4 @@ def normalize_fields(
 
 
 def has_scannable_qr(qr_payload: str) -> bool:
-    return (qr_payload or "").strip().upper().startswith("X-HM://")
+    return parse_setup_uri(qr_payload or "") is not None

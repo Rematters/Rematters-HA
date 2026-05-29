@@ -3,8 +3,16 @@
 from __future__ import annotations
 
 import html
+import io
+import re
+
+import qrcode
+from qrcode.image.svg import SvgPathImage
 
 from zwave_payload import format_dsk, meta_summary, parse_qr_digits, pin_from_dsk, qr_encode_payload
+
+QR_TARGET_PX = 200
+QR_OFFSET_Y = 68
 
 
 def compose_card_svg(*, dsk: str, qr_payload: str) -> str:
@@ -23,26 +31,29 @@ def compose_card_svg(*, dsk: str, qr_payload: str) -> str:
 
     qr_block = ""
     if qr:
-        import io
-        import re
-
-        import qrcode
-        from qrcode.image.svg import SvgPathImage
-
         q = qrcode.QRCode(
             version=3,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
             box_size=1,
-            border=0,
+            border=2,
         )
         q.add_data(qr)
         q.make(fit=True)
+        modules = len(q.modules)
+        border = q.border
+        pixel_size = modules + border * 2
+        scale = QR_TARGET_PX / pixel_size
+        offset_x = (300 - QR_TARGET_PX) / 2
+
         buf = io.BytesIO()
         q.make_image(image_factory=SvgPathImage).save(buf)
         svg = buf.getvalue().decode("utf-8")
         match = re.search(r"<svg([^>]*)>(.*)</svg>", svg, re.DOTALL | re.IGNORECASE)
         if match:
-            qr_block = f'<g transform="translate(42,72) scale(1.35)"><svg{match.group(1)}>{match.group(2)}</svg></g>'
+            qr_block = (
+                f'<g transform="translate({offset_x:.1f},{QR_OFFSET_Y}) '
+                f'scale({scale:.4f})"><svg{match.group(1)}>{match.group(2)}</svg></g>'
+            )
         else:
             qr_block = f'<text x="150" y="140" text-anchor="middle">QR</text>'
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.28 (2026-05-28)
+
+- HomeKit: preserve full `X-HM://` payload (e.g. IKEA DIRIGERA extended URIs); derive setup ID, pairing code, and category from URI
+- HomeKit form: setup URI + scan only; category/setup ID shown as derived hints
+- Z-Wave: larger QR on label cards and PNG export
+
 ## 0.1.27 (2026-05-28)
 
 - Fix startup crash: HomeKit label module no longer resolves monorepo paths at import time (`IndexError` on `/app/homekit_label.py`)
