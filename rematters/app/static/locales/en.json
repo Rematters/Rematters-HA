@@ -55,6 +55,7 @@
   "code.attribute": "Attribute",
   "code.attribute_placeholder": "matter_setup_code",
   "confirm.delete_code": "Delete this Matter code?",
+  "confirm.delete_category": "Delete this category?",
   "confirm.import_merge": "Merge with existing data? (Cancel = replace)",
   "alert.backup_gdrive_ok": "Backup uploaded to Google Drive.",
   "alert.backup_local_ok": "Local backup created.",

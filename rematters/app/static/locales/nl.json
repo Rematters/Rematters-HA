@@ -40,6 +40,7 @@
   "code.attribute": "Attribuut",
   "code.attribute_placeholder": "matter_setup_code",
   "confirm.delete_code": "Deze Matter code verwijderen?",
+  "confirm.delete_category": "Deze categorie verwijderen?",
   "confirm.import_merge": "Samenvoegen met bestaande data? (Annuleren = vervangen)",
   "alert.backup_gdrive_ok": "Backup naar Google Drive gelukt.",
   "alert.backup_local_ok": "Lokale backup gemaakt.",

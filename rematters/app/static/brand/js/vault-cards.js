@@ -200,7 +200,7 @@
     if (delBtn && handlers.onDelete) {
       delBtn.onclick = (e) => {
         e.stopPropagation();
-        handlers.onDelete(code);
+        handlers.onDelete(code.id);
       };
     }
   }
