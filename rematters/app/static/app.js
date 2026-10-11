@@ -45,6 +45,9 @@ async function api(path, options = {}) {
 
 async function loadVault() {
   vault = await api("/vault");
+  if (activeCategoryId && !vault.categories.some((c) => c.id === activeCategoryId)) {
+    activeCategoryId = null;
+  }
   render();
 }
 
@@ -263,6 +266,9 @@ function openCategoryDialog(cat = null) {
   document.getElementById("category-icon").value =
     cat?.icon || window.RemattersCategoryIcons?.DEFAULT_ICON || "folder";
   ensureCategoryIconPicker()?.setValue(cat?.icon || "folder");
+  document
+    .getElementById("btn-delete-category")
+    .classList.toggle("hidden", !cat?.id);
   dlg.showModal();
 }
 
@@ -385,6 +391,15 @@ async function saveCategory(e) {
   await loadVault();
 }
 
+async function deleteCategory() {
+  const id = document.getElementById("category-id").value;
+  if (!id) return;
+  if (!confirm(t("confirm.delete_category"))) return;
+  await api(`/categories/${id}`, { method: "DELETE" });
+  document.getElementById("category-dialog").close();
+  await loadVault();
+}
+
 async function loadCloudStatus() {
   try {
     const s = await api("/cloud/status");
@@ -422,6 +437,7 @@ function bindUi() {
     ?.addEventListener("input", syncHomeKitDerived);
   document.getElementById("btn-add-code").onclick = () => openCodeDialog();
   document.getElementById("btn-add-category").onclick = () => openCategoryDialog();
+  document.getElementById("btn-delete-category").onclick = deleteCategory;
   document.getElementById("code-form").onsubmit = saveCode;
   document.getElementById("category-form").onsubmit = saveCategory;
   document.getElementById("search").oninput = renderCodes;

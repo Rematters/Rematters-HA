@@ -40,6 +40,7 @@
   "code.attribute": "Attribut",
   "code.attribute_placeholder": "matter_setup_code",
   "confirm.delete_code": "Supprimer ce code Matter ?",
+  "confirm.delete_category": "Supprimer cette catégorie ?",
   "confirm.import_merge": "Fusionner avec les données existantes ? (Annuler = remplacer)",
   "alert.backup_gdrive_ok": "Sauvegarde envoyée sur Google Drive.",
   "alert.backup_local_ok": "Sauvegarde locale créée.",
