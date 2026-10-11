@@ -141,7 +141,8 @@
       global.RemattersScanner.scanImageFile(
         file,
         handleParsedText,
-        (err) => alert(err.message || t("scan.photo_fail"))
+        (err) => alert(err.message || t("scan.photo_fail")),
+        opts.libUrl
       );
     });
   }

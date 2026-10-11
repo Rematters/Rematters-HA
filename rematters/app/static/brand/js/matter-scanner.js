@@ -133,7 +133,7 @@
     );
   }
 
-  async function scanImageFile(file, onScan, onError) {
+  async function scanImageFile(file, onScan, onError, libUrl) {
     if ("BarcodeDetector" in global) {
       try {
         const detector = new global.BarcodeDetector({ formats: ["qr_code"] });
@@ -149,6 +149,29 @@
         return;
       }
       onError(new Error("No QR code found in image"));
+      return;
+    }
+    if (libUrl) {
+      try {
+        await loadScript(libUrl);
+        let mount = document.getElementById("rematters-file-scan-tmp");
+        if (!mount) {
+          mount = document.createElement("div");
+          mount.id = "rematters-file-scan-tmp";
+          mount.style.display = "none";
+          document.body.appendChild(mount);
+        }
+        const html5 = new global.Html5Qrcode("rematters-file-scan-tmp");
+        const text = await html5.scanFileV2(file, false);
+        html5.clear();
+        if (text && text.decodedText) {
+          onScan(text.decodedText);
+          return;
+        }
+        onError(new Error("No QR code found in image"));
+      } catch (e) {
+        onError(e instanceof Error ? e : new Error("No QR code found in image"));
+      }
       return;
     }
     onError(new Error("Photo scan not supported in this browser"));
